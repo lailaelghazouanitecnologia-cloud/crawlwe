@@ -1,0 +1,55 @@
+[
+  {
+    "src": "https://www.becaneparis.com/_next/static/chunks/polyfills-42372ed130431b0a.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "inline": false
+  },
+  {
+    "src": "https://www.becaneparis.com/_next/static/chunks/webpack-34d1e5e5ef85ce60.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "inline": false
+  },
+  {
+    "src": "https://www.becaneparis.com/_next/static/chunks/framework-4e3ae95319ffb6ff.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "inline": false
+  },
+  {
+    "src": "https://www.becaneparis.com/_next/static/chunks/main-159b081a2805ddbc.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "inline": false
+  },
+  {
+    "src": "https://www.becaneparis.com/_next/static/chunks/pages/_app-3ac86bf8d2ab131f.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "inline": false
+  },
+  {
+    "src": "https://www.becaneparis.com/_next/static/chunks/891-a2c16447156e7149.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "inline": false
+  },
+  {
+    "src": "https://www.becaneparis.com/_next/static/chunks/308-c96a0c60fd231f46.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "inline": false
+  },
+  {
+    "src": "https://www.becaneparis.com/_next/static/chunks/917-5637392c66a4ee15.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "inline": false
+  },
+  {
+    "src": "https://www.becaneparis.com/_next/static/chunks/pages/index-e69ffe850c3ee569.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "inline": false
+  },
+  {
+    "src": "https://www.becaneparis.com/_next/static/3-aZrQkvo-gU_e2ra1NMq/_buildManifest.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "inline": false
+  },
+  {
+    "src": "https://www.becaneparis.com/_next/static/3-aZrQkvo-gU_e2ra1NMq/_ssgManifest.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "inline": false
+  },
+  {
+    "src": null,
+    "inline": true,
+    "length": 56128
+  },
+  {
+    "src": "https://www.becaneparis.com/locales/en.js",
+    "inline": false
+  }
+]
