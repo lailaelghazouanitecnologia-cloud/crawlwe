@@ -17,11 +17,8 @@ pub mod analyzer;
 pub mod models;
 pub mod zad;
 pub mod export;
-
-// Re-export from subdirectories
-pub mod capture {
-    pub mod browser;
-}
+pub mod capture;
+pub mod vm;
 
 pub mod parser {
     pub mod css;
