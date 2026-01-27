@@ -5,11 +5,18 @@
 //!
 //! Also includes ZAD - a template metaprogramming language.
 //!
+//! Output structure:
+//! - index.html (clean semantic HTML)
+//! - styles.css (unified CSS)
+//! - scripts/main.js (relevant JS only)
+//! - project.toml (metadata and dependencies)
+//!
 //! Exposed to Python via PyO3.
 
 pub mod analyzer;
 pub mod models;
 pub mod zad;
+pub mod export;
 
 // Re-export from subdirectories
 pub mod capture {
@@ -169,6 +176,173 @@ fn detect_ui_frameworks(js: &str) -> PyResult<String> {
         .map_err(|e| PyRuntimeError::new_err(e.to_string()))
 }
 
+/// Get CDN URL for a CSS library
+#[pyfunction]
+#[pyo3(signature = (name, version=None))]
+fn get_css_cdn(name: &str, version: Option<&str>) -> Option<String> {
+    export::LibraryCDN::get_css(name, version)
+}
+
+/// Get CDN URL for a JS library
+#[pyfunction]
+#[pyo3(signature = (name, version=None))]
+fn get_js_cdn(name: &str, version: Option<&str>) -> Option<String> {
+    export::LibraryCDN::get_js(name, version)
+}
+
+/// Get Google Fonts URL
+#[pyfunction]
+#[pyo3(signature = (family, weights=None))]
+fn get_font_url(family: &str, weights: Option<Vec<String>>) -> String {
+    export::LibraryCDN::get_font_url(family, &weights.unwrap_or_default())
+}
+
+/// Generate project configuration based on analysis
+#[pyfunction]
+#[pyo3(signature = (url, html, css, js, title=None))]
+fn generate_project_config(
+    url: &str,
+    html: &str,
+    css: &str,
+    js: &str,
+    title: Option<String>,
+) -> PyResult<String> {
+    use chrono::Utc;
+
+    let analysis = Analyzer::analyze(html, css, js);
+    let css_analysis = analyzer::CssAnalyzer::analyze(css);
+    let js_analysis = analyzer::JsAnalyzer::analyze(js);
+
+    let mut config = export::ProjectConfig {
+        meta: export::ProjectMeta {
+            name: sanitize_name(title.as_deref().unwrap_or("captured-page")),
+            version: "1.0.0".to_string(),
+            description: title.clone(),
+            captured_at: Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            generator: "crawlwe".to_string(),
+        },
+        source: export::SourceInfo {
+            url: url.to_string(),
+            title,
+            viewport: export::ViewportInfo {
+                width: 1440,
+                height: 900,
+                device_scale: 1.0,
+                device_type: "desktop".to_string(),
+            },
+            language: detect_language(html),
+            charset: "UTF-8".to_string(),
+        },
+        technologies: export::Technologies::default(),
+        dependencies: export::Dependencies::default(),
+        export: export::ExportOptions::default(),
+    };
+
+    // Detect CSS framework
+    if let Some(css_fw) = &analysis.frameworks.css_framework {
+        if css_fw.name.to_lowercase().contains("tailwind") {
+            config.technologies.css_framework = Some(export::CssFramework {
+                name: "tailwind".to_string(),
+                version: None,
+                cdn_url: export::LibraryCDN::get_css("tailwind", None),
+                inline: false,
+            });
+            config.dependencies.css.push(export::DependencyLink {
+                name: "Tailwind CSS".to_string(),
+                url: "https://cdn.tailwindcss.com".to_string(),
+                version: None,
+                integrity: None,
+                crossorigin: None,
+            });
+        } else if css_fw.name.to_lowercase().contains("bootstrap") {
+            config.technologies.css_framework = Some(export::CssFramework {
+                name: "bootstrap".to_string(),
+                version: Some("5".to_string()),
+                cdn_url: export::LibraryCDN::get_css("bootstrap", None),
+                inline: false,
+            });
+            if let Some(url) = export::LibraryCDN::get_css("bootstrap", None) {
+                config.dependencies.css.push(export::DependencyLink {
+                    name: "Bootstrap".to_string(),
+                    url,
+                    version: Some("5".to_string()),
+                    integrity: None,
+                    crossorigin: Some("anonymous".to_string()),
+                });
+            }
+        }
+    }
+
+    // Detect animation libraries
+    for lib in &js_analysis.animation_libraries {
+        config.technologies.animation_libs.push(lib.name.clone());
+        if let Some(url) = export::LibraryCDN::get_js(&lib.name, None) {
+            config.dependencies.js.push(export::DependencyLink {
+                name: lib.name.clone(),
+                url,
+                version: None,
+                integrity: None,
+                crossorigin: None,
+            });
+        }
+    }
+
+    // Detect 3D/graphics libraries
+    if js_analysis.webgl.detected || js_analysis.webgpu.detected {
+        if js.contains("THREE") || js.contains("three.js") {
+            config.technologies.graphics_libs.push("three.js".to_string());
+            if let Some(url) = export::LibraryCDN::get_js("three", None) {
+                config.dependencies.js.push(export::DependencyLink {
+                    name: "Three.js".to_string(),
+                    url,
+                    version: None,
+                    integrity: None,
+                    crossorigin: None,
+                });
+            }
+        }
+    }
+
+    // Add fonts
+    for font in &css_analysis.fonts {
+        config.dependencies.fonts.push(export::FontImport {
+            family: font.clone(),
+            weights: vec!["400".to_string(), "700".to_string()],
+            source: "google".to_string(),
+            url: Some(export::LibraryCDN::get_font_url(font, &["400".to_string(), "700".to_string()])),
+        });
+    }
+
+    // Generate TOML
+    let exporter = export::ProjectExporter::new(config);
+    Ok(exporter.generate_project_toml())
+}
+
+fn sanitize_name(name: &str) -> String {
+    name.to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { '-' })
+        .collect::<String>()
+        .trim_matches('-')
+        .to_string()
+}
+
+fn detect_language(html: &str) -> Option<String> {
+    if let Some(start) = html.find("lang=\"") {
+        let rest = &html[start + 6..];
+        if let Some(end) = rest.find('"') {
+            return Some(rest[..end].to_string());
+        }
+    }
+    if let Some(start) = html.find("lang='") {
+        let rest = &html[start + 6..];
+        if let Some(end) = rest.find('\'') {
+            return Some(rest[..end].to_string());
+        }
+    }
+    None
+}
+
 // ============================================================================
 // PYTHON MODULE
 // ============================================================================
@@ -193,6 +367,12 @@ fn crawlwe_core(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(detect_webgpu, m)?)?;
     m.add_function(wrap_pyfunction!(detect_animation_libraries, m)?)?;
     m.add_function(wrap_pyfunction!(detect_ui_frameworks, m)?)?;
+
+    // Export functions
+    m.add_function(wrap_pyfunction!(get_css_cdn, m)?)?;
+    m.add_function(wrap_pyfunction!(get_js_cdn, m)?)?;
+    m.add_function(wrap_pyfunction!(get_font_url, m)?)?;
+    m.add_function(wrap_pyfunction!(generate_project_config, m)?)?;
 
     // Classes
     m.add_class::<PageResult>()?;
