@@ -1,34 +1,19 @@
-# CrawlWe 🕷️
+# CrawlWe
 
 **Web Page Extractor for ML Training** - Captures clean HTML + CSS from web pages to train AI models that generate more natural designs.
 
-## Quick Start
-
-### Option 1: Python-only (Easiest)
+## Installation (Windows/Linux/Mac)
 
 ```bash
-# Install dependencies and package
-pip install click rich beautifulsoup4 lxml cssbeautifier requests
+# Just install it!
+pip install -e .
 
-# Clone and install
+# Or install from the directory
 cd crawlwe
-pip install -e . --no-build-isolation
+pip install .
 ```
 
-### Option 2: Full Installation (with Rust - Faster)
-
-Requires: [Rust toolchain](https://rustup.rs/)
-
-```bash
-# Install Rust (if not installed)
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-
-# Install maturin
-pip install maturin
-
-# Build and install
-maturin develop --release
-```
+That's it! No Rust required.
 
 ## Usage
 

@@ -1,0 +1,35 @@
+# Rust Build Configuration for CrawlWe
+#
+# To build with Rust acceleration:
+# 1. Install Rust: https://rustup.rs/
+# 2. Rename this file to pyproject.toml (backup the original first)
+# 3. Run: pip install maturin && maturin develop --release
+
+[build-system]
+requires = ["maturin>=1.4,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "crawlwe"
+version = "0.1.0"
+description = "Web page extractor for ML training - captures HTML + CSS with full fidelity"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+dependencies = [
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=5.0.0",
+    "cssbeautifier>=1.14.0",
+    "requests>=2.31.0",
+]
+
+[project.scripts]
+crawlwe = "crawlwe.cli:main"
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+python-source = "."
+module-name = "crawlwe.crawlwe_core"
