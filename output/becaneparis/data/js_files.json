@@ -1,0 +1,94 @@
+[
+  {
+    "url": "https://www.becaneparis.com/_next/static/chunks/polyfills-42372ed130431b0a.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "file": "scripts/external_0.js",
+    "size": 112541,
+    "has_webgl": false,
+    "has_webgpu": false
+  },
+  {
+    "url": "https://www.becaneparis.com/_next/static/chunks/webpack-34d1e5e5ef85ce60.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "file": "scripts/external_1.js",
+    "size": 4604,
+    "has_webgl": false,
+    "has_webgpu": false
+  },
+  {
+    "url": "https://www.becaneparis.com/_next/static/chunks/framework-4e3ae95319ffb6ff.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "file": "scripts/external_2.js",
+    "size": 140353,
+    "has_webgl": false,
+    "has_webgpu": false
+  },
+  {
+    "url": "https://www.becaneparis.com/_next/static/chunks/main-159b081a2805ddbc.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "file": "scripts/external_3.js",
+    "size": 120871,
+    "has_webgl": false,
+    "has_webgpu": false
+  },
+  {
+    "url": "https://www.becaneparis.com/_next/static/chunks/pages/_app-3ac86bf8d2ab131f.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "file": "scripts/external_4.js",
+    "size": 1056502,
+    "has_webgl": true,
+    "has_webgpu": false
+  },
+  {
+    "url": "https://www.becaneparis.com/_next/static/chunks/891-a2c16447156e7149.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "file": "scripts/external_5.js",
+    "size": 51636,
+    "has_webgl": false,
+    "has_webgpu": false
+  },
+  {
+    "url": "https://www.becaneparis.com/_next/static/chunks/308-c96a0c60fd231f46.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "file": "scripts/external_6.js",
+    "size": 49182,
+    "has_webgl": false,
+    "has_webgpu": false
+  },
+  {
+    "url": "https://www.becaneparis.com/_next/static/chunks/917-5637392c66a4ee15.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "file": "scripts/external_7.js",
+    "size": 13397,
+    "has_webgl": false,
+    "has_webgpu": false
+  },
+  {
+    "url": "https://www.becaneparis.com/_next/static/chunks/pages/index-e69ffe850c3ee569.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "file": "scripts/external_8.js",
+    "size": 4535,
+    "has_webgl": false,
+    "has_webgpu": false
+  },
+  {
+    "url": "https://www.becaneparis.com/_next/static/3-aZrQkvo-gU_e2ra1NMq/_buildManifest.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "file": "scripts/external_9.js",
+    "size": 2264,
+    "has_webgl": false,
+    "has_webgpu": false
+  },
+  {
+    "url": "https://www.becaneparis.com/_next/static/3-aZrQkvo-gU_e2ra1NMq/_ssgManifest.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg",
+    "file": "scripts/external_10.js",
+    "size": 451,
+    "has_webgl": false,
+    "has_webgpu": false
+  },
+  {
+    "url": "https://www.becaneparis.com/locales/en.js",
+    "file": "scripts/external_11.js",
+    "size": 10860,
+    "has_webgl": false,
+    "has_webgpu": false
+  },
+  {
+    "url": null,
+    "file": "scripts/inline_0.js",
+    "size": 56129,
+    "inline": true,
+    "has_webgl": false,
+    "has_webgpu": false
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "webgl": [
+    "shaderSource",
+    "createShader",
+    "WebGLRenderingContext",
+    "uniform2fv",
+    "compileShader",
+    "enableVertexAttribArray",
+    "uniform2f",
+    "createProgram",
+    "uniform3f",
+    "THREE.",
+    "vertexAttribPointer",
+    "ShaderSource",
+    "uniform1f"
+  ],
+  "webgpu": [],
+  "has_webgl": true,
+  "has_webgpu": false
+}
