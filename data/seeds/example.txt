@@ -1,0 +1,20 @@
+# CrawlWe Seeds File
+# One URL per line. Lines starting with # are comments.
+
+# Design inspiration sites
+https://dribbble.com
+https://www.awwwards.com
+https://www.siteinspire.com
+
+# Popular frameworks (for component patterns)
+https://tailwindcss.com
+https://getbootstrap.com
+https://mui.com
+
+# Example well-designed sites
+https://stripe.com
+https://linear.app
+https://vercel.com
+https://notion.so
+
+# Add your URLs below:
