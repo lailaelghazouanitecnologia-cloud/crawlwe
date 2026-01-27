@@ -4,6 +4,7 @@ CrawlWe Scraper - Extracts formatted HTML, CSS, and JavaScript from web pages.
 Detects WebGL/WebGPU code.
 """
 
+import argparse
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
@@ -12,8 +13,9 @@ import os
 import re
 import cssbeautifier
 
-URL = "https://www.becaneparis.com/"
-OUTPUT_DIR = "output/becaneparis"
+# Default values (can be overridden by command line)
+DEFAULT_url = "https://www.becaneparis.com/"
+DEFAULT_output_dir = "output/becaneparis"
 
 # WebGL/WebGPU detection patterns
 WEBGL_PATTERNS = [
@@ -90,10 +92,27 @@ def detect_webgl_webgpu(code):
     return findings
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='CrawlWe Scraper - Extract HTML, CSS, JS from web pages')
+    parser.add_argument('url', nargs='?', default=DEFAULT_url, help='url to scrape')
+    parser.add_argument('-o', '--output', default=None, help='Output directory')
+    args = parser.parse_args()
+
+    url = args.url
+
+    # Determine output directory
+    if args.output:
+        output_dir = args.output
+    else:
+        # Use domain name as directory
+        parsed = urlparse(url)
+        domain = parsed.netloc.replace('www.', '').replace('.', '_')
+        output_dir = f"output/{domain}"
+
     # Create directories
-    os.makedirs(f"{OUTPUT_DIR}/data", exist_ok=True)
-    os.makedirs(f"{OUTPUT_DIR}/scripts", exist_ok=True)
-    os.makedirs(f"{OUTPUT_DIR}/css", exist_ok=True)
+    os.makedirs(f"{output_dir}/data", exist_ok=True)
+    os.makedirs(f"{output_dir}/scripts", exist_ok=True)
+    os.makedirs(f"{output_dir}/css", exist_ok=True)
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0"
@@ -101,12 +120,13 @@ def main():
 
     print(f"🕷️  CrawlWe Scraper")
     print(f"==================")
-    print(f"URL: {URL}")
+    print(f"url: {url}")
+    print(f"Output: {output_dir}")
     print()
 
     # Fetch page
     print("📄 Fetching page...")
-    response = requests.get(URL, headers=headers, timeout=30)
+    response = requests.get(url, headers=headers, timeout=30)
     response.raise_for_status()
 
     html = response.text
@@ -128,7 +148,7 @@ def main():
         if not href:
             continue
 
-        full_url = urljoin(URL, href)
+        full_url = urljoin(url, href)
         filename = f"stylesheet_{i}.css"
 
         try:
@@ -139,7 +159,7 @@ def main():
                 formatted_css = format_css(raw_css)
 
                 # Save individual CSS file
-                with open(f"{OUTPUT_DIR}/css/{filename}", 'w', encoding='utf-8') as f:
+                with open(f"{output_dir}/css/{filename}", 'w', encoding='utf-8') as f:
                     f.write(f"/* Source: {full_url} */\n\n")
                     f.write(formatted_css)
 
@@ -161,7 +181,7 @@ def main():
             formatted = format_css(style.string)
             filename = f"inline_{i}.css"
 
-            with open(f"{OUTPUT_DIR}/css/{filename}", 'w', encoding='utf-8') as f:
+            with open(f"{output_dir}/css/{filename}", 'w', encoding='utf-8') as f:
                 f.write(f"/* Inline style #{i} */\n\n")
                 f.write(formatted)
 
@@ -176,7 +196,7 @@ def main():
 
     # Combined CSS
     combined_css = "\n\n".join(all_css)
-    with open(f"{OUTPUT_DIR}/styles.css", 'w', encoding='utf-8') as f:
+    with open(f"{output_dir}/styles.css", 'w', encoding='utf-8') as f:
         f.write(combined_css)
     print(f"\n   Combined: styles.css ({len(combined_css):,} bytes)")
 
@@ -194,19 +214,19 @@ def main():
         if not src:
             continue
 
-        full_url = urljoin(URL, src)
+        full_url = urljoin(url, src)
         filename = f"external_{i}.js"
 
         try:
             # Only fetch same-origin scripts (avoid third-party)
-            if urlparse(full_url).netloc == urlparse(URL).netloc:
+            if urlparse(full_url).netloc == urlparse(url).netloc:
                 print(f"   Fetching: {urlparse(full_url).path[:50]}...")
                 js_response = requests.get(full_url, headers=headers, timeout=10)
                 if js_response.ok:
                     js_code = js_response.text
 
                     # Save JS file
-                    with open(f"{OUTPUT_DIR}/scripts/{filename}", 'w', encoding='utf-8') as f:
+                    with open(f"{output_dir}/scripts/{filename}", 'w', encoding='utf-8') as f:
                         f.write(f"// Source: {full_url}\n\n")
                         f.write(js_code)
 
@@ -259,7 +279,7 @@ def main():
         findings = detect_webgl_webgpu(js_code)
 
         # Save inline script
-        with open(f"{OUTPUT_DIR}/scripts/{filename}", 'w', encoding='utf-8') as f:
+        with open(f"{output_dir}/scripts/{filename}", 'w', encoding='utf-8') as f:
             f.write(f"// Inline script #{inline_count}\n\n")
             f.write(js_code)
 
@@ -301,13 +321,13 @@ def main():
     for img in soup.find_all('img'):
         src = img.get('src') or img.get('data-src')
         if src:
-            images.append(urljoin(URL, src))
+            images.append(urljoin(url, src))
     for el in soup.find_all(srcset=True):
         srcset = el.get('srcset', '')
         for part in srcset.split(','):
             src = part.strip().split()[0]
             if src:
-                images.append(urljoin(URL, src))
+                images.append(urljoin(url, src))
     images = list(set(images))
     print(f"   Images: {len(images)}")
 
@@ -316,7 +336,7 @@ def main():
     for a in soup.find_all('a', href=True):
         href = a.get('href')
         if href and not href.startswith('#') and not href.startswith('javascript:'):
-            links.append(urljoin(URL, href))
+            links.append(urljoin(url, href))
     links = list(set(links))
     print(f"   Links: {len(links)}")
 
@@ -354,12 +374,12 @@ def main():
 
     formatted_html = format_html(clean_soup)
 
-    with open(f"{OUTPUT_DIR}/index.html", 'w', encoding='utf-8') as f:
+    with open(f"{output_dir}/index.html", 'w', encoding='utf-8') as f:
         f.write(formatted_html)
     print(f"   ✓ index.html ({len(formatted_html):,} bytes)")
 
     # Save raw HTML
-    with open(f"{OUTPUT_DIR}/data/raw.html", 'w', encoding='utf-8') as f:
+    with open(f"{output_dir}/data/raw.html", 'w', encoding='utf-8') as f:
         f.write(html)
     print(f"   ✓ data/raw.html ({len(html):,} bytes)")
 
@@ -368,29 +388,29 @@ def main():
     # ========================================
     print("\n💾 Saving data files...")
 
-    with open(f"{OUTPUT_DIR}/data/css_files.json", 'w', encoding='utf-8') as f:
+    with open(f"{output_dir}/data/css_files.json", 'w', encoding='utf-8') as f:
         json.dump(css_files, f, indent=2)
     print(f"   ✓ data/css_files.json")
 
-    with open(f"{OUTPUT_DIR}/data/js_files.json", 'w', encoding='utf-8') as f:
+    with open(f"{output_dir}/data/js_files.json", 'w', encoding='utf-8') as f:
         json.dump(js_files, f, indent=2)
     print(f"   ✓ data/js_files.json")
 
-    with open(f"{OUTPUT_DIR}/data/images.json", 'w', encoding='utf-8') as f:
+    with open(f"{output_dir}/data/images.json", 'w', encoding='utf-8') as f:
         json.dump(images, f, indent=2)
     print(f"   ✓ data/images.json")
 
-    with open(f"{OUTPUT_DIR}/data/links.json", 'w', encoding='utf-8') as f:
+    with open(f"{output_dir}/data/links.json", 'w', encoding='utf-8') as f:
         json.dump(links, f, indent=2)
     print(f"   ✓ data/links.json")
 
-    with open(f"{OUTPUT_DIR}/data/webgl_webgpu.json", 'w', encoding='utf-8') as f:
+    with open(f"{output_dir}/data/webgl_webgpu.json", 'w', encoding='utf-8') as f:
         json.dump(webgl_findings, f, indent=2)
     print(f"   ✓ data/webgl_webgpu.json")
 
     # Metadata
     metadata = {
-        "url": URL,
+        "url": url,
         "title": title,
         "stats": {
             "html_bytes": len(html),
@@ -408,7 +428,7 @@ def main():
             "webgpu_patterns_found": len(webgl_findings["webgpu"])
         }
     }
-    with open(f"{OUTPUT_DIR}/metadata.json", 'w', encoding='utf-8') as f:
+    with open(f"{output_dir}/metadata.json", 'w', encoding='utf-8') as f:
         json.dump(metadata, f, indent=2)
     print(f"   ✓ metadata.json")
 
@@ -418,7 +438,7 @@ def main():
     print(f"\n{'='*50}")
     print(f"✅ DONE!")
     print(f"{'='*50}")
-    print(f"\n📁 Output: {OUTPUT_DIR}/")
+    print(f"\n📁 Output: {output_dir}/")
     print(f"   ├── index.html      ({len(formatted_html):,} bytes, formatted)")
     print(f"   ├── styles.css      ({len(combined_css):,} bytes, formatted)")
     print(f"   ├── css/            ({len(css_files)} files)")

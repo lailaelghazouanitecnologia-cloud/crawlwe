@@ -195,6 +195,422 @@ UI_PATTERNS = {
     },
 }
 
+# ============================================================================
+# TAILWIND & CSS FRAMEWORK PATTERNS
+# ============================================================================
+
+TAILWIND_PATTERNS = {
+    # Layout
+    "display": r'\b(block|inline-block|inline|flex|inline-flex|grid|inline-grid|hidden|contents|flow-root)\b',
+    "flex": r'\b(flex-row|flex-col|flex-row-reverse|flex-col-reverse|flex-wrap|flex-nowrap|flex-wrap-reverse|flex-1|flex-auto|flex-initial|flex-none|grow|grow-0|shrink|shrink-0)\b',
+    "grid": r'\b(grid-cols-\d+|grid-rows-\d+|col-span-\d+|row-span-\d+|col-start-\d+|col-end-\d+|gap-\d+|gap-x-\d+|gap-y-\d+)\b',
+    "position": r'\b(static|fixed|absolute|relative|sticky)\b',
+    "positioning": r'\b(inset-\d+|top-\d+|right-\d+|bottom-\d+|left-\d+|inset-x-\d+|inset-y-\d+)\b',
+    "z_index": r'\b(z-\d+|z-auto)\b',
+
+    # Spacing
+    "padding": r'\b(p-\d+|px-\d+|py-\d+|pt-\d+|pr-\d+|pb-\d+|pl-\d+|p-\[[\d\w]+\])\b',
+    "margin": r'\b(m-\d+|mx-\d+|my-\d+|mt-\d+|mr-\d+|mb-\d+|ml-\d+|m-auto|-m-\d+|m-\[[\d\w]+\])\b',
+    "space": r'\b(space-x-\d+|space-y-\d+|-space-x-\d+|-space-y-\d+)\b',
+
+    # Sizing
+    "width": r'\b(w-\d+|w-full|w-screen|w-min|w-max|w-fit|w-auto|w-\d+\/\d+|w-\[[\d\w%]+\])\b',
+    "height": r'\b(h-\d+|h-full|h-screen|h-min|h-max|h-fit|h-auto|h-\d+\/\d+|h-\[[\d\w%]+\])\b',
+    "min_max": r'\b(min-w-\d+|max-w-\d+|min-h-\d+|max-h-\d+|min-w-full|max-w-full|max-w-screen-\w+)\b',
+
+    # Typography
+    "font_size": r'\b(text-xs|text-sm|text-base|text-lg|text-xl|text-2xl|text-3xl|text-4xl|text-5xl|text-6xl|text-7xl|text-8xl|text-9xl)\b',
+    "font_weight": r'\b(font-thin|font-extralight|font-light|font-normal|font-medium|font-semibold|font-bold|font-extrabold|font-black)\b',
+    "text_align": r'\b(text-left|text-center|text-right|text-justify|text-start|text-end)\b',
+    "text_color": r'\b(text-(?:black|white|transparent|current|inherit|slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d+)\b',
+    "line_height": r'\b(leading-none|leading-tight|leading-snug|leading-normal|leading-relaxed|leading-loose|leading-\d+)\b',
+    "letter_spacing": r'\b(tracking-tighter|tracking-tight|tracking-normal|tracking-wide|tracking-wider|tracking-widest)\b',
+
+    # Colors & Background
+    "bg_color": r'\b(bg-(?:black|white|transparent|current|inherit|slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d+)\b',
+    "bg_gradient": r'\b(bg-gradient-to-\w|from-\w+-\d+|via-\w+-\d+|to-\w+-\d+)\b',
+    "opacity": r'\b(opacity-\d+)\b',
+
+    # Borders
+    "border": r'\b(border|border-\d+|border-t|border-r|border-b|border-l|border-t-\d+|border-r-\d+|border-b-\d+|border-l-\d+)\b',
+    "border_color": r'\b(border-(?:black|white|transparent|current|slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d+)\b',
+    "border_radius": r'\b(rounded|rounded-none|rounded-sm|rounded-md|rounded-lg|rounded-xl|rounded-2xl|rounded-3xl|rounded-full|rounded-t|rounded-r|rounded-b|rounded-l|rounded-tl|rounded-tr|rounded-br|rounded-bl)\b',
+
+    # Effects
+    "shadow": r'\b(shadow|shadow-sm|shadow-md|shadow-lg|shadow-xl|shadow-2xl|shadow-inner|shadow-none)\b',
+    "blur": r'\b(blur|blur-sm|blur-md|blur-lg|blur-xl|blur-2xl|blur-3xl|blur-none)\b',
+    "brightness": r'\b(brightness-\d+)\b',
+    "contrast": r'\b(contrast-\d+)\b',
+    "grayscale": r'\b(grayscale|grayscale-0)\b',
+    "saturate": r'\b(saturate-\d+)\b',
+
+    # Transforms
+    "scale": r'\b(scale-\d+|scale-x-\d+|scale-y-\d+)\b',
+    "rotate": r'\b(rotate-\d+|-rotate-\d+)\b',
+    "translate": r'\b(translate-x-\d+|translate-y-\d+|-translate-x-\d+|-translate-y-\d+)\b',
+    "skew": r'\b(skew-x-\d+|skew-y-\d+|-skew-x-\d+|-skew-y-\d+)\b',
+    "origin": r'\b(origin-center|origin-top|origin-top-right|origin-right|origin-bottom-right|origin-bottom|origin-bottom-left|origin-left|origin-top-left)\b',
+
+    # Transitions & Animation
+    "transition": r'\b(transition|transition-all|transition-colors|transition-opacity|transition-shadow|transition-transform|transition-none)\b',
+    "duration": r'\b(duration-\d+)\b',
+    "ease": r'\b(ease-linear|ease-in|ease-out|ease-in-out)\b',
+    "delay": r'\b(delay-\d+)\b',
+    "animate": r'\b(animate-none|animate-spin|animate-ping|animate-pulse|animate-bounce)\b',
+
+    # Interactivity
+    "cursor": r'\b(cursor-auto|cursor-default|cursor-pointer|cursor-wait|cursor-text|cursor-move|cursor-help|cursor-not-allowed|cursor-none|cursor-context-menu|cursor-progress|cursor-cell|cursor-crosshair|cursor-vertical-text|cursor-alias|cursor-copy|cursor-no-drop|cursor-grab|cursor-grabbing|cursor-all-scroll|cursor-col-resize|cursor-row-resize|cursor-n-resize|cursor-e-resize|cursor-s-resize|cursor-w-resize|cursor-ne-resize|cursor-nw-resize|cursor-se-resize|cursor-sw-resize|cursor-ew-resize|cursor-ns-resize|cursor-nesw-resize|cursor-nwse-resize|cursor-zoom-in|cursor-zoom-out)\b',
+    "pointer_events": r'\b(pointer-events-none|pointer-events-auto)\b',
+    "user_select": r'\b(select-none|select-text|select-all|select-auto)\b',
+
+    # States (prefixes)
+    "hover": r'\bhover:[\w-]+',
+    "focus": r'\bfocus:[\w-]+',
+    "active": r'\bactive:[\w-]+',
+    "disabled": r'\bdisabled:[\w-]+',
+    "group_hover": r'\bgroup-hover:[\w-]+',
+    "dark": r'\bdark:[\w-]+',
+    "sm": r'\bsm:[\w-]+',
+    "md": r'\bmd:[\w-]+',
+    "lg": r'\blg:[\w-]+',
+    "xl": r'\bxl:[\w-]+',
+    "2xl": r'\b2xl:[\w-]+',
+}
+
+# Tailwind class to CSS mapping (common utilities)
+TAILWIND_TO_CSS = {
+    # Display
+    "flex": "display: flex",
+    "grid": "display: grid",
+    "block": "display: block",
+    "inline": "display: inline",
+    "inline-block": "display: inline-block",
+    "hidden": "display: none",
+    "inline-flex": "display: inline-flex",
+
+    # Flex direction
+    "flex-row": "flex-direction: row",
+    "flex-col": "flex-direction: column",
+    "flex-row-reverse": "flex-direction: row-reverse",
+    "flex-col-reverse": "flex-direction: column-reverse",
+
+    # Justify & Align
+    "justify-start": "justify-content: flex-start",
+    "justify-end": "justify-content: flex-end",
+    "justify-center": "justify-content: center",
+    "justify-between": "justify-content: space-between",
+    "justify-around": "justify-content: space-around",
+    "justify-evenly": "justify-content: space-evenly",
+    "items-start": "align-items: flex-start",
+    "items-end": "align-items: flex-end",
+    "items-center": "align-items: center",
+    "items-baseline": "align-items: baseline",
+    "items-stretch": "align-items: stretch",
+
+    # Position
+    "relative": "position: relative",
+    "absolute": "position: absolute",
+    "fixed": "position: fixed",
+    "sticky": "position: sticky",
+    "static": "position: static",
+
+    # Sizing
+    "w-full": "width: 100%",
+    "w-screen": "width: 100vw",
+    "w-auto": "width: auto",
+    "h-full": "height: 100%",
+    "h-screen": "height: 100vh",
+    "h-auto": "height: auto",
+
+    # Text
+    "text-left": "text-align: left",
+    "text-center": "text-align: center",
+    "text-right": "text-align: right",
+    "text-justify": "text-align: justify",
+
+    # Font weight
+    "font-thin": "font-weight: 100",
+    "font-extralight": "font-weight: 200",
+    "font-light": "font-weight: 300",
+    "font-normal": "font-weight: 400",
+    "font-medium": "font-weight: 500",
+    "font-semibold": "font-weight: 600",
+    "font-bold": "font-weight: 700",
+    "font-extrabold": "font-weight: 800",
+    "font-black": "font-weight: 900",
+
+    # Font size
+    "text-xs": "font-size: 0.75rem; line-height: 1rem",
+    "text-sm": "font-size: 0.875rem; line-height: 1.25rem",
+    "text-base": "font-size: 1rem; line-height: 1.5rem",
+    "text-lg": "font-size: 1.125rem; line-height: 1.75rem",
+    "text-xl": "font-size: 1.25rem; line-height: 1.75rem",
+    "text-2xl": "font-size: 1.5rem; line-height: 2rem",
+    "text-3xl": "font-size: 1.875rem; line-height: 2.25rem",
+    "text-4xl": "font-size: 2.25rem; line-height: 2.5rem",
+
+    # Border radius
+    "rounded": "border-radius: 0.25rem",
+    "rounded-none": "border-radius: 0",
+    "rounded-sm": "border-radius: 0.125rem",
+    "rounded-md": "border-radius: 0.375rem",
+    "rounded-lg": "border-radius: 0.5rem",
+    "rounded-xl": "border-radius: 0.75rem",
+    "rounded-2xl": "border-radius: 1rem",
+    "rounded-3xl": "border-radius: 1.5rem",
+    "rounded-full": "border-radius: 9999px",
+
+    # Shadow
+    "shadow-sm": "box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05)",
+    "shadow": "box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+    "shadow-md": "box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
+    "shadow-lg": "box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+    "shadow-xl": "box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+    "shadow-2xl": "box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25)",
+    "shadow-none": "box-shadow: none",
+
+    # Overflow
+    "overflow-auto": "overflow: auto",
+    "overflow-hidden": "overflow: hidden",
+    "overflow-visible": "overflow: visible",
+    "overflow-scroll": "overflow: scroll",
+    "overflow-x-auto": "overflow-x: auto",
+    "overflow-y-auto": "overflow-y: auto",
+    "overflow-x-hidden": "overflow-x: hidden",
+    "overflow-y-hidden": "overflow-y: hidden",
+
+    # Cursor
+    "cursor-pointer": "cursor: pointer",
+    "cursor-default": "cursor: default",
+    "cursor-not-allowed": "cursor: not-allowed",
+    "cursor-wait": "cursor: wait",
+    "cursor-grab": "cursor: grab",
+    "cursor-grabbing": "cursor: grabbing",
+
+    # Transition
+    "transition": "transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms",
+    "transition-all": "transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms",
+    "transition-colors": "transition-property: color, background-color, border-color, text-decoration-color, fill, stroke; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms",
+    "transition-opacity": "transition-property: opacity; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms",
+    "transition-transform": "transition-property: transform; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms",
+
+    # Animation
+    "animate-spin": "animation: spin 1s linear infinite",
+    "animate-ping": "animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite",
+    "animate-pulse": "animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+    "animate-bounce": "animation: bounce 1s infinite",
+}
+
+CSS_MODULES_PATTERN = r'[A-Z][a-zA-Z]+_[a-zA-Z]+__[a-zA-Z0-9]{5,}'
+
+CSS_IN_JS_PATTERNS = {
+    "styled_components": [
+        r'styled\.[a-z]+`',
+        r'styled\([^)]+\)`',
+        r'css`[^`]+`',
+        r'createGlobalStyle`',
+    ],
+    "emotion": [
+        r'@emotion/react',
+        r'@emotion/styled',
+        r'css\(\{[^}]+\}\)',
+        r'jsx\s*,\s*css',
+    ],
+    "styled_jsx": [
+        r'<style\s+jsx[^>]*>',
+        r'css\.resolve`',
+    ],
+    "linaria": [
+        r'@linaria',
+        r'css`[^`]+`',
+    ],
+    "vanilla_extract": [
+        r'@vanilla-extract',
+        r'style\(\{',
+        r'globalStyle\(',
+    ],
+}
+
+
+def analyze_tailwind(html_content):
+    """Analyze HTML for Tailwind CSS usage."""
+    results = {
+        "detected": False,
+        "confidence": 0,
+        "classes_found": defaultdict(list),
+        "state_classes": {
+            "hover": [],
+            "focus": [],
+            "active": [],
+            "dark": [],
+            "responsive": {
+                "sm": [],
+                "md": [],
+                "lg": [],
+                "xl": [],
+                "2xl": [],
+            },
+        },
+        "css_conversion": [],
+        "total_utility_classes": 0,
+    }
+
+    # Extract all class attributes
+    class_pattern = r'class=["\']([^"\']+)["\']'
+    all_classes = re.findall(class_pattern, html_content)
+    all_class_names = []
+    for class_str in all_classes:
+        all_class_names.extend(class_str.split())
+
+    # Check each Tailwind pattern
+    for category, pattern in TAILWIND_PATTERNS.items():
+        matches = []
+        for class_name in all_class_names:
+            if re.match(pattern, class_name):
+                matches.append(class_name)
+        if matches:
+            results["classes_found"][category] = list(set(matches))
+
+    # Count total utility classes
+    total = sum(len(v) for v in results["classes_found"].values())
+    results["total_utility_classes"] = total
+
+    # Determine if Tailwind is being used
+    if total > 10:
+        results["detected"] = True
+        results["confidence"] = min(100, total * 2)
+
+    # Extract state-prefixed classes
+    for class_name in all_class_names:
+        if class_name.startswith("hover:"):
+            results["state_classes"]["hover"].append(class_name)
+        elif class_name.startswith("focus:"):
+            results["state_classes"]["focus"].append(class_name)
+        elif class_name.startswith("active:"):
+            results["state_classes"]["active"].append(class_name)
+        elif class_name.startswith("dark:"):
+            results["state_classes"]["dark"].append(class_name)
+        elif class_name.startswith("sm:"):
+            results["state_classes"]["responsive"]["sm"].append(class_name)
+        elif class_name.startswith("md:"):
+            results["state_classes"]["responsive"]["md"].append(class_name)
+        elif class_name.startswith("lg:"):
+            results["state_classes"]["responsive"]["lg"].append(class_name)
+        elif class_name.startswith("xl:"):
+            results["state_classes"]["responsive"]["xl"].append(class_name)
+        elif class_name.startswith("2xl:"):
+            results["state_classes"]["responsive"]["2xl"].append(class_name)
+
+    # Convert detected Tailwind classes to CSS
+    for class_name in all_class_names:
+        if class_name in TAILWIND_TO_CSS:
+            results["css_conversion"].append({
+                "class": class_name,
+                "css": TAILWIND_TO_CSS[class_name]
+            })
+
+    # Handle numeric spacing classes (p-4, m-2, etc.)
+    spacing_scale = {
+        "0": "0px", "0.5": "0.125rem", "1": "0.25rem", "1.5": "0.375rem",
+        "2": "0.5rem", "2.5": "0.625rem", "3": "0.75rem", "3.5": "0.875rem",
+        "4": "1rem", "5": "1.25rem", "6": "1.5rem", "7": "1.75rem",
+        "8": "2rem", "9": "2.25rem", "10": "2.5rem", "11": "2.75rem",
+        "12": "3rem", "14": "3.5rem", "16": "4rem", "20": "5rem",
+        "24": "6rem", "28": "7rem", "32": "8rem", "36": "9rem",
+        "40": "10rem", "44": "11rem", "48": "12rem", "52": "13rem",
+        "56": "14rem", "60": "15rem", "64": "16rem", "72": "18rem",
+        "80": "20rem", "96": "24rem",
+    }
+
+    for class_name in all_class_names:
+        # Padding
+        m = re.match(r'^p-(\d+(?:\.\d+)?)$', class_name)
+        if m and m.group(1) in spacing_scale:
+            results["css_conversion"].append({
+                "class": class_name,
+                "css": f"padding: {spacing_scale[m.group(1)]}"
+            })
+
+        # Margin
+        m = re.match(r'^m-(\d+(?:\.\d+)?)$', class_name)
+        if m and m.group(1) in spacing_scale:
+            results["css_conversion"].append({
+                "class": class_name,
+                "css": f"margin: {spacing_scale[m.group(1)]}"
+            })
+
+        # Gap
+        m = re.match(r'^gap-(\d+(?:\.\d+)?)$', class_name)
+        if m and m.group(1) in spacing_scale:
+            results["css_conversion"].append({
+                "class": class_name,
+                "css": f"gap: {spacing_scale[m.group(1)]}"
+            })
+
+    return results
+
+
+def analyze_css_modules(html_content, css_content):
+    """Detect CSS Modules usage."""
+    results = {
+        "detected": False,
+        "hashed_classes": [],
+        "component_names": set(),
+        "total_count": 0,
+    }
+
+    # Find CSS Module patterns in HTML
+    module_classes = re.findall(CSS_MODULES_PATTERN, html_content)
+
+    if module_classes:
+        results["detected"] = True
+        results["hashed_classes"] = list(set(module_classes))[:50]
+        results["total_count"] = len(set(module_classes))
+
+        # Extract component names from the pattern
+        for cls in module_classes:
+            parts = cls.split('_')
+            if len(parts) >= 2:
+                results["component_names"].add(parts[0])
+
+    results["component_names"] = list(results["component_names"])
+    return results
+
+
+def analyze_css_in_js(js_content):
+    """Detect CSS-in-JS libraries."""
+    results = {
+        "detected": False,
+        "libraries": {},
+        "styled_components_count": 0,
+        "css_template_literals": 0,
+    }
+
+    for lib_name, patterns in CSS_IN_JS_PATTERNS.items():
+        matches = []
+        for pattern in patterns:
+            found = re.findall(pattern, js_content)
+            if found:
+                matches.extend(found)
+
+        if matches:
+            results["detected"] = True
+            results["libraries"][lib_name] = {
+                "detected": True,
+                "occurrences": len(matches),
+                "samples": list(set([str(m)[:100] for m in matches]))[:5]
+            }
+
+    # Count styled.X patterns
+    styled_count = len(re.findall(r'styled\.[a-z]+', js_content))
+    results["styled_components_count"] = styled_count
+
+    # Count css`` template literals
+    css_literals = len(re.findall(r'css`', js_content))
+    results["css_template_literals"] = css_literals
+
+    return results
+
 
 def analyze_css(css_content):
     """Deep analysis of CSS content."""
@@ -657,7 +1073,9 @@ def analyze_html(html_content):
     return results
 
 
-def generate_classification_report(css_analysis, js_analysis, html_analysis):
+def generate_classification_report(css_analysis, js_analysis, html_analysis,
+                                   tailwind_analysis=None, css_modules_analysis=None,
+                                   css_in_js_analysis=None):
     """Generate a human-readable classification report."""
 
     report = []
@@ -665,6 +1083,77 @@ def generate_classification_report(css_analysis, js_analysis, html_analysis):
     report.append("DEEP ANALYSIS REPORT")
     report.append("=" * 80)
     report.append("")
+
+    # CSS Framework Detection
+    report.append("## CSS FRAMEWORKS & METHODOLOGY")
+    report.append("-" * 40)
+
+    framework_detected = False
+
+    # Tailwind Analysis
+    if tailwind_analysis and tailwind_analysis.get("detected"):
+        framework_detected = True
+        report.append(f"✓ TAILWIND CSS DETECTED (confidence: {tailwind_analysis['confidence']}%)")
+        report.append(f"  Total utility classes: {tailwind_analysis['total_utility_classes']}")
+
+        # Show categories found
+        categories = list(tailwind_analysis.get("classes_found", {}).keys())
+        if categories:
+            report.append(f"  Categories: {', '.join(categories[:10])}")
+
+        # Show state classes
+        states = tailwind_analysis.get("state_classes", {})
+        if states.get("hover"):
+            report.append(f"  Hover states: {len(states['hover'])} classes")
+            report.append(f"    Examples: {', '.join(states['hover'][:5])}")
+        if states.get("focus"):
+            report.append(f"  Focus states: {len(states['focus'])} classes")
+        if states.get("dark"):
+            report.append(f"  Dark mode: {len(states['dark'])} classes")
+        if states.get("responsive"):
+            resp = states["responsive"]
+            resp_counts = {k: len(v) for k, v in resp.items() if v}
+            if resp_counts:
+                report.append(f"  Responsive: {resp_counts}")
+
+        # Show CSS conversions
+        conversions = tailwind_analysis.get("css_conversion", [])
+        if conversions:
+            report.append(f"  ")
+            report.append(f"  📝 Tailwind → CSS Conversions ({len(conversions)} classes):")
+            for conv in conversions[:10]:
+                report.append(f"    .{conv['class']} {{ {conv['css']} }}")
+        report.append("")
+
+    # CSS Modules Analysis
+    if css_modules_analysis and css_modules_analysis.get("detected"):
+        framework_detected = True
+        report.append(f"✓ CSS MODULES DETECTED")
+        report.append(f"  Hashed classes: {css_modules_analysis['total_count']}")
+        components = css_modules_analysis.get("component_names", [])
+        if components:
+            report.append(f"  Components: {', '.join(components[:15])}")
+        hashed = css_modules_analysis.get("hashed_classes", [])
+        if hashed:
+            report.append(f"  Examples: {', '.join(hashed[:5])}")
+        report.append("")
+
+    # CSS-in-JS Analysis
+    if css_in_js_analysis and css_in_js_analysis.get("detected"):
+        framework_detected = True
+        report.append(f"✓ CSS-IN-JS DETECTED")
+        for lib, data in css_in_js_analysis.get("libraries", {}).items():
+            if data.get("detected"):
+                report.append(f"  • {lib}: {data['occurrences']} occurrences")
+        if css_in_js_analysis.get("styled_components_count"):
+            report.append(f"  styled.X patterns: {css_in_js_analysis['styled_components_count']}")
+        if css_in_js_analysis.get("css_template_literals"):
+            report.append(f"  css`` literals: {css_in_js_analysis['css_template_literals']}")
+        report.append("")
+
+    if not framework_detected:
+        report.append("  No utility-first CSS framework detected (vanilla CSS)")
+        report.append("")
 
     # Animation Classification
     report.append("## ANIMATIONS & MOTION")
@@ -967,9 +1456,21 @@ def main():
     print("🔬 Analyzing HTML...")
     html_analysis = analyze_html(html_content)
 
+    print("🔬 Analyzing Tailwind CSS...")
+    tailwind_analysis = analyze_tailwind(html_content)
+
+    print("🔬 Analyzing CSS Modules...")
+    css_modules_analysis = analyze_css_modules(html_content, css_content)
+
+    print("🔬 Analyzing CSS-in-JS...")
+    css_in_js_analysis = analyze_css_in_js(js_content)
+
     # Generate report
     print()
-    report = generate_classification_report(css_analysis, js_analysis, html_analysis)
+    report = generate_classification_report(
+        css_analysis, js_analysis, html_analysis,
+        tailwind_analysis, css_modules_analysis, css_in_js_analysis
+    )
     print(report)
 
     # Save detailed JSON
@@ -977,6 +1478,9 @@ def main():
         "css": css_analysis,
         "javascript": js_analysis,
         "html": html_analysis,
+        "tailwind": tailwind_analysis,
+        "css_modules": css_modules_analysis,
+        "css_in_js": css_in_js_analysis,
     }
 
     # Clean up sets for JSON serialization

@@ -93,20 +93,20 @@
     },
     "visual_effects": {
       "shadows": [
-        "none !important\n}\n\nbody #shopify-pc__prefs button {\n  outline-color: transparent !important\n}\n\nbody #shopify-pc__prefs__overlay {\n  display: none\n}\n\nbody .shopify-pc__prefs__dialog {\n  top: unset",
+        "none\n}\n\nbody .shopify-pc__banner__wrapper {\n  flex-direction: column",
         "none !important",
-        "none\n}\n\nbody .shopify-pc__banner__wrapper {\n  flex-direction: column"
+        "none !important\n}\n\nbody #shopify-pc__prefs button {\n  outline-color: transparent !important\n}\n\nbody #shopify-pc__prefs__overlay {\n  display: none\n}\n\nbody .shopify-pc__prefs__dialog {\n  top: unset"
       ],
       "filters": [
         "blur(5px)"
       ],
       "blend_modes": [],
       "clip_paths": [
-        "polygon(0 var(--clip), 100% var(--clip), 100% 100%, 0 100%)",
-        "polygon(0 var(--clip), 100% var(--clip), 100% 100%, 0 100%)\n}\n\n.Page_wrapper__4sVUY:not(.Page_transparent__9_3wO) {\n  background-color: var(--color-background)",
-        "polygon(0 0, 100% 0, 100% var(--clip), 0 var(--clip))\n}\n\n.Page_wrapper__4sVUY.Page_bottom-overlay-enter__PAZh0:not(.Page_shown__SSgUL),\n.Page_wrapper__4sVUY.Page_bottom-overlay-exit__BP_9t.Page_exiting__VysCL {\n  --clip: calc((1 - var(--clip-progress)) * var(--vh))",
         "none\n}\n\n.Page_wrapper__4sVUY.Page_top-overlay-enter__QFTKO:not(.Page_shown__SSgUL),\n.Page_wrapper__4sVUY.Page_top-overlay-exit__BcOKB.Page_exiting__VysCL {\n  --clip: calc(var(--clip-progress) * var(--vh))",
-        "polygon(0 0, 100% 0, 100% var(--clip), 0 var(--clip))"
+        "polygon(0 var(--clip), 100% var(--clip), 100% 100%, 0 100%)\n}\n\n.Page_wrapper__4sVUY:not(.Page_transparent__9_3wO) {\n  background-color: var(--color-background)",
+        "polygon(0 0, 100% 0, 100% var(--clip), 0 var(--clip))",
+        "polygon(0 var(--clip), 100% var(--clip), 100% 100%, 0 100%)",
+        "polygon(0 0, 100% 0, 100% var(--clip), 0 var(--clip))\n}\n\n.Page_wrapper__4sVUY.Page_bottom-overlay-enter__PAZh0:not(.Page_shown__SSgUL),\n.Page_wrapper__4sVUY.Page_bottom-overlay-exit__BP_9t.Page_exiting__VysCL {\n  --clip: calc((1 - var(--clip-progress)) * var(--vh))"
       ]
     },
     "css_variables": {
@@ -159,18 +159,18 @@
     },
     "colors": {
       "palette": [
-        "hsla(0, 0%, 100%, 0)",
-        "#000",
-        "#e6e6e6",
-        "#b2b2b2",
-        "rgba(0, 0, 0, 0)",
-        "#666",
+        "rgb(255 255 255/var(--loading-opacity)",
         "hsla(0, 0%, 96%, .8)",
-        "#fff",
-        "#f6f6f6",
-        "#0a0a0a",
         "hsla(0, 0%, 4%, .369)",
-        "rgb(255 255 255/var(--loading-opacity)"
+        "#f6f6f6",
+        "#fff",
+        "#666",
+        "#b2b2b2",
+        "#000",
+        "rgba(0, 0, 0, 0)",
+        "#e6e6e6",
+        "#0a0a0a",
+        "hsla(0, 0%, 100%, 0)"
       ],
       "gradients": [
         "radial-gradient",
@@ -179,22 +179,22 @@
     },
     "typography": {
       "font_families": [
-        "Eurostile Becane",
+        "inherit",
         "var(--main-font)",
-        "inherit"
+        "Eurostile Becane"
       ],
       "font_sizes": [
-        "30rem",
         "8rem",
-        "10rem",
-        "inherit",
-        "20rem\n  }\n}\n\n.composition_base__XQo6f {\n  font-size: 8rem",
-        "20rem\n  }\n}\n\n.ComingSoon_wrapper__Mr2uT {\n  border: 1px solid hotpink",
         "20rem\n  }\n}\n\n.Headings_subtitle__XELi0 {\n  font-size: 8rem",
-        "12rem",
-        "100%\n}\n\nbody .shopify-pc__prefs__intro .shopify-pc__prefs__intro-main h3 {\n  margin: 0\n}\n\nbody .shopify-pc__prefs__options {\n  padding: 0\n}\n\nbody .shopify-pc__prefs__options .shopify-pc__prefs__option {\n  padding-top: var(--gap)",
         "12rem\n}\n\n@media screen and (max-width:900px) {\n  body {\n    font-size: 14rem\n  }\n}\n\n* {\n  box-sizing: border-box",
-        "var(--rem)"
+        "12rem",
+        "20rem\n  }\n}\n\n.ComingSoon_wrapper__Mr2uT {\n  border: 1px solid hotpink",
+        "30rem",
+        "inherit",
+        "var(--rem)",
+        "20rem\n  }\n}\n\n.composition_base__XQo6f {\n  font-size: 8rem",
+        "100%\n}\n\nbody .shopify-pc__prefs__intro .shopify-pc__prefs__intro-main h3 {\n  margin: 0\n}\n\nbody .shopify-pc__prefs__options {\n  padding: 0\n}\n\nbody .shopify-pc__prefs__options .shopify-pc__prefs__option {\n  padding-top: var(--gap)",
+        "10rem"
       ]
     }
   },
@@ -204,8 +204,8 @@
         "detected": true,
         "occurrences": 3,
         "samples": [
-          "motion.",
-          "useAnimation"
+          "useAnimation",
+          "motion."
         ]
       },
       "velocity": {
@@ -221,10 +221,10 @@
         "detected": true,
         "occurrences": 154,
         "samples": [
-          "PerspectiveCamera",
-          "three.",
           "WebGLRenderer",
           "THREE.",
+          "three.",
+          "Scene()",
           "Three."
         ]
       },
@@ -309,52 +309,52 @@
         "detected": true,
         "occurrences": 4,
         "samples": [
-          "addEventListener(\"scroll\"",
-          "onScroll"
+          "onScroll",
+          "addEventListener(\"scroll\""
         ]
       },
       "mouse_events": {
         "detected": true,
         "occurrences": 59,
         "samples": [
+          "MouseUp",
+          "MouseEnter",
           "MouseLeave",
           "mousedown",
-          "MouseDown",
-          "mousemove",
-          "mouseUp"
+          "mouseenter"
         ]
       },
       "touch_events": {
         "detected": true,
         "occurrences": 38,
         "samples": [
-          "touchend",
+          "TouchEnd",
           "touchEnd",
-          "TouchStart",
-          "touchstart",
-          "touchStart"
+          "touchend",
+          "touchmove",
+          "touchMove"
         ]
       },
       "pointer_events": {
         "detected": true,
         "occurrences": 30,
         "samples": [
-          "pointerdown",
-          "PointerMove",
-          "pointermove",
-          "PointerUp",
-          "PointerDown"
+          "PointerDown",
+          "pointerUp",
+          "pointerup",
+          "pointerMove",
+          "PointerUp"
         ]
       },
       "wheel_events": {
         "detected": true,
         "occurrences": 34,
         "samples": [
-          "DOMMouseScroll",
-          "MouseWheel",
-          "wheel",
           "Wheel",
-          "mousewheel"
+          "mousewheel",
+          "MouseWheel",
+          "DOMMouseScroll",
+          "wheel"
         ]
       }
     },
@@ -363,21 +363,21 @@
         "detected": true,
         "occurrences": 384,
         "samples": [
+          "createElement",
           "jsx",
           "react.",
-          "React.",
-          "createElement"
+          "React."
         ]
       },
       "next_js": {
         "detected": true,
         "occurrences": 155,
         "samples": [
-          "__next",
-          "__NEXT",
-          "next/",
           "_NEXT",
-          "_next"
+          "__next",
+          "_next",
+          "next/",
+          "__NEXT"
         ]
       }
     },
@@ -386,11 +386,11 @@
         "detected": true,
         "occurrences": 5,
         "samples": [
-          "compileShader",
-          "createProgram",
-          "createShader",
+          "shaderSource",
           "ShaderSource",
-          "shaderSource"
+          "createShader",
+          "createProgram",
+          "compileShader"
         ]
       }
     },
@@ -610,76 +610,76 @@
         "uTexture"
       ],
       "shader_uniforms": [
+        "sampler2D roughnessMap",
+        "sampler2D gradientMap",
+        "sampler2D shadow_pass",
+        "float envMapIntensity",
         "float tFlip",
-        "float scale",
-        "sampler2D metalnessMap",
-        "mat3 anisotropyMapTransform",
-        "sampler2D specularColorMap",
-        "mat3 uvTransform",
-        "HemisphereLight hemisphereLights",
-        "mat4 projectionMatrix",
-        "float uTime",
-        "mat3 clearcoatRoughnessMapTransform",
-        "float morphTargetInfluences",
-        "float sheenRoughness",
+        "sampler2D directionalShadowMap",
+        "sampler2D iridescenceMap",
+        "vec3 attenuationColor",
+        "float ior",
+        "bool receiveShadow",
+        "float metalness",
+        "mat3 lightMapTransform",
+        "mat4 spotLightMatrix",
+        "float opacity",
+        "float iridescenceIOR",
+        "sampler2D morphTexture",
+        "mat3 iridescenceThicknessMapTransform",
+        "mat4 bindMatrixInverse",
         "highp usampler2D",
-        "SpotLightShadow spotLightShadows",
-        "vec3 vPosition",
-        "float bumpScale",
-        "sampler2DArray depthColor",
-        "float transmission",
-        "float iridescence",
-        "vec2 uResolution"
+        "mat3 clearcoatRoughnessMapTransform"
       ],
       "shader_attributes": [
-        "float faceIndex",
-        "vec3 normal",
-        "vec2 uv",
-        "vec4 tangent",
-        "vec3 color",
-        "vec4 color",
-        "vec3 position",
-        "vec4 skinIndex",
-        "mat4 instanceMatrix",
-        "vec2 uv2",
-        "is likely",
-        "vec2 uv3",
-        "vec4 skinWeight",
-        "vec3 instanceColor",
         "vec2 uv1",
-        "float lineDistance"
+        "vec3 color",
+        "vec3 normal",
+        "is likely",
+        "float faceIndex",
+        "vec4 skinIndex",
+        "vec4 skinWeight",
+        "vec2 uv",
+        "vec2 uv3",
+        "vec4 color",
+        "vec3 instanceColor",
+        "float lineDistance",
+        "mat4 instanceMatrix",
+        "vec3 position",
+        "vec4 tangent",
+        "vec2 uv2"
       ]
     },
     "three_js_objects": {
       "geometries": [
-        "BoxGeometry",
-        "TetrahedronGeometry",
-        "CylinderGeometry",
-        "TorusGeometry",
         "CircleGeometry",
-        "PlaneGeometry",
-        "BufferGeometry",
-        "RingGeometry",
+        "CylinderGeometry",
         "SphereGeometry",
-        "ConeGeometry"
+        "BufferGeometry",
+        "TorusGeometry",
+        "TetrahedronGeometry",
+        "BoxGeometry",
+        "ConeGeometry",
+        "PlaneGeometry",
+        "RingGeometry"
       ],
       "materials": [
-        "MeshBasicMaterial",
-        "RawShaderMaterial",
-        "ShaderMaterial",
-        "MeshPhongMaterial",
         "MeshStandardMaterial",
-        "LineBasicMaterial",
         "SpriteMaterial",
+        "PointsMaterial",
         "MeshLambertMaterial",
-        "PointsMaterial"
+        "MeshPhongMaterial",
+        "ShaderMaterial",
+        "LineBasicMaterial",
+        "RawShaderMaterial",
+        "MeshBasicMaterial"
       ],
       "lights": [
+        "SpotLight",
         "RectAreaLight",
+        "DirectionalLight",
         "AmbientLight",
         "PointLight",
-        "SpotLight",
-        "DirectionalLight",
         "HemisphereLight"
       ],
       "controls": []
@@ -689,10 +689,10 @@
         "detected": true,
         "occurrences": 239,
         "samples": [
-          "useState",
-          "useCallback",
           "useEffect",
+          "useCallback",
           "useMemo",
+          "useState",
           "useRef"
         ]
       },
@@ -700,16 +700,16 @@
         "detected": true,
         "occurrences": 15,
         "samples": [
-          "Ref(",
-          "ref("
+          "ref(",
+          "Ref("
         ]
       },
       "svelte_stores": {
         "detected": true,
         "occurrences": 13,
         "samples": [
-          "Readable(",
-          "$:"
+          "$:",
+          "Readable("
         ]
       }
     }
@@ -809,5 +809,107 @@
       "filters": 0
     },
     "canvas_elements": 1
+  },
+  "tailwind": {
+    "detected": false,
+    "confidence": 0,
+    "classes_found": {},
+    "state_classes": {
+      "hover": [],
+      "focus": [],
+      "active": [],
+      "dark": [],
+      "responsive": {
+        "sm": [],
+        "md": [],
+        "lg": [],
+        "xl": [],
+        "2xl": []
+      }
+    },
+    "css_conversion": [],
+    "total_utility_classes": 0
+  },
+  "css_modules": {
+    "detected": true,
+    "hashed_classes": [
+      "TransversalBarItem_current__LWhTy",
+      "TransversalBarItem_wrapper__fnoPL",
+      "PageInfoLine_content__xcMmk",
+      "Footer_button__6TX0R",
+      "Panel_wrapper__V15ne",
+      "PageInfo_outer__nntOE",
+      "Header_buttons__17fhY",
+      "Header_bar__vsqrk",
+      "Page_wrapper__4sVUY",
+      "Button_wrapper__7fAqP",
+      "PageInfo_top__fCCae",
+      "PageInfo_wrapper__cUoPG",
+      "PageInfo_bar__0AqVI",
+      "PageInfo_innerBar__x30Wq",
+      "Page_inner__rFalG",
+      "Footer_email__1D59l",
+      "Footer_left__U8YjQ",
+      "ItemBar_tail__Uv6Xh",
+      "TransversalBarItem_media__PINXA",
+      "Header_menu__w3kGA",
+      "Header_button__GGQGX",
+      "ButtonBar_wrapper__XGSlH",
+      "Headings_wrapper__75B9v",
+      "Header_inner__t5u43",
+      "TextShuffle_wrapper__TsMdF",
+      "Headings_title__JWnpi",
+      "Header_loader__zgn5f",
+      "Header_menuButton__IWoYC",
+      "Bars_bar__fFw9F",
+      "Root_sticky__DdJew",
+      "Footer_wrapper__yxAOD",
+      "PageInfo_headings__cvUvj",
+      "GridHelper_gridHelperCol__90nQe",
+      "ItemBar_left__AnQt1",
+      "Header_logo__e4CTy",
+      "ItemBar_outer__jsffw",
+      "Bars_topRight__K7ovG",
+      "ItemBar_wrapper__mjCTr",
+      "Root_inner__cxF2x",
+      "PageInfo_empty__Q0Iyx",
+      "AdaptableWrapper_wrapper__bToAF",
+      "AdaptableWrapper_inner__3Z2hJ",
+      "Collection_wrapper__Qkstw",
+      "Root_stickyContent__HSyVP",
+      "PageInfo_inner__EjNFq",
+      "Footer_right__HN4fv",
+      "Header_line__t9nAr",
+      "Background_wrapper__A7j5c",
+      "ItemBar_secondWrapper__mipps",
+      "Root_pageInfo__8FIkA"
+    ],
+    "component_names": [
+      "GridHelper",
+      "AdaptableWrapper",
+      "TextShuffle",
+      "Button",
+      "PageInfoLine",
+      "Header",
+      "PageInfo",
+      "Background",
+      "Root",
+      "Panel",
+      "Footer",
+      "TransversalBarItem",
+      "ButtonBar",
+      "Bars",
+      "ItemBar",
+      "Page",
+      "Collection",
+      "Headings"
+    ],
+    "total_count": 62
+  },
+  "css_in_js": {
+    "detected": false,
+    "libraries": {},
+    "styled_components_count": 0,
+    "css_template_literals": 0
   }
 }

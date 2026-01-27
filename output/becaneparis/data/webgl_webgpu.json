@@ -1,18 +1,18 @@
 {
   "webgl": [
-    "shaderSource",
-    "createShader",
     "WebGLRenderingContext",
-    "uniform2fv",
-    "compileShader",
+    "uniform1f",
+    "createShader",
     "enableVertexAttribArray",
-    "uniform2f",
-    "createProgram",
     "uniform3f",
-    "THREE.",
     "vertexAttribPointer",
+    "shaderSource",
+    "THREE.",
     "ShaderSource",
-    "uniform1f"
+    "compileShader",
+    "createProgram",
+    "uniform2fv",
+    "uniform2f"
   ],
   "webgpu": [],
   "has_webgl": true,
