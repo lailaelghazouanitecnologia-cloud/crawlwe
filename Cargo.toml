@@ -1,57 +1,32 @@
 [package]
-name = "crawlwe_core"
+name = "crawlwe"
 version = "0.1.0"
 edition = "2021"
-description = "High-performance web page extractor for ML training data"
 
-[lib]
-name = "crawlwe_core"
-crate-type = ["cdylib", "rlib"]
-path = "rust/src/lib.rs"
+[[bin]]
+name = "crawlwe"
+path = "src/main.rs"
 
 [dependencies]
-# PyO3 - Python bindings
-pyo3 = { version = "0.20", features = ["extension-module"] }
-
-# Async runtime
-tokio = { version = "1.35", features = ["full"] }
+# Async
+tokio = { version = "1", features = ["full"] }
 futures = "0.3"
 
-# HTTP client
-reqwest = { version = "0.11", features = ["json", "cookies"] }
-
 # Chrome DevTools Protocol
-chromiumoxide = { version = "0.5", features = ["tokio-runtime"], default-features = false }
+chromiumoxide = { version = "0.7", default-features = false, features = ["tokio-runtime"] }
 
-# HTML parsing
-scraper = "0.18"
-html5ever = "0.26"
-markup5ever_rcdom = "0.2"
-
-# CSS parsing (using alpha - stable not released yet)
-lightningcss = { version = "1.0.0-alpha.70", features = ["visitor"] }
-cssparser = "0.33"
+# CLI
+clap = { version = "4", features = ["derive"] }
 
 # Serialization
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 
-# Utilities
-url = "2.5"
-thiserror = "1.0"
-tracing = "0.1"
-tracing-subscriber = "0.3"
-parking_lot = "0.12"
-dashmap = "5.5"
-rayon = "1.8"
-
-# Base64 for embedding assets
-base64 = "0.21"
-
-# Regex (lightweight)
-regex-lite = "0.1"
+# Utils
+thiserror = "1"
+url = "2"
+base64 = "0.22"
 
 [profile.release]
 lto = true
-codegen-units = 1
 opt-level = 3
