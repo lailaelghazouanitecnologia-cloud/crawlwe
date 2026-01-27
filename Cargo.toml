@@ -28,8 +28,8 @@ scraper = "0.18"
 html5ever = "0.26"
 markup5ever_rcdom = "0.2"
 
-# CSS parsing
-lightningcss = { version = "1.0", features = ["visitor"] }
+# CSS parsing (using alpha - stable not released yet)
+lightningcss = { version = "1.0.0-alpha.70", features = ["visitor"] }
 cssparser = "0.33"
 
 # Serialization
