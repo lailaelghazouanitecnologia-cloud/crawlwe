@@ -52,6 +52,17 @@ pub struct ViewportInfo {
     pub device_type: String, // desktop, tablet, mobile
 }
 
+impl Default for ViewportInfo {
+    fn default() -> Self {
+        Self {
+            width: 1440,
+            height: 900,
+            device_scale: 1.0,
+            device_type: "desktop".to_string(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Technologies {
     /// CSS framework detected

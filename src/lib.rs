@@ -19,6 +19,7 @@ pub mod zad;
 pub mod export;
 pub mod capture;
 pub mod vm;
+pub mod pipeline;
 
 pub mod parser {
     pub mod css;
