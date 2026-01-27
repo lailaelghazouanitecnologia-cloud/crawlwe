@@ -1,0 +1,67 @@
+# CrawlWe Capture: stripe.dev
+# Stripe Developer Portal - Clean, modern documentation site
+
+[meta]
+name = "stripe-developer-portal"
+version = "1.0.0"
+generator = "crawlwe"
+captured_at = "2026-01-27T19:50:00Z"
+
+[source]
+url = "https://stripe.dev/"
+title = "Stripe for Developers"
+language = "en"
+charset = "UTF-8"
+
+[source.viewport]
+width = 1440
+height = 900
+device_scale = 1.0
+device_type = "desktop"
+
+[technologies]
+css_framework = "custom"
+has_animations = false
+has_webgl = false
+design_system = "stripe"
+
+[css_analysis]
+variables_count = 32
+keyframes_count = 0
+colors_count = 15
+fonts = ["system-ui", "SF Mono"]
+has_media_queries = true
+has_grid_layout = true
+has_flexbox = true
+has_gradient = true
+has_backdrop_filter = true
+
+[colors]
+primary = "#635bff"
+primary_dark = "#5851e9"
+primary_light = "#7a73ff"
+background = "#0a2540"
+surface = "#0d2f4f"
+text = "#ffffff"
+text_secondary = "#adbdcc"
+accent_cyan = "#00d4ff"
+accent_green = "#00d924"
+accent_orange = "#ff7a00"
+accent_pink = "#ff5689"
+
+[dependencies]
+
+[dependencies.fonts]
+"SF Mono" = { weights = ["400"], source = "system" }
+"system-ui" = { weights = ["400", "500", "600", "700"], source = "system" }
+
+[features]
+sticky_header = true
+backdrop_blur = true
+code_highlighting = true
+responsive_grid = true
+gradient_text = true
+
+[export]
+minify_html = false
+minify_css = false

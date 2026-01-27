@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaline - AI Infrastructure for Enterprise</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="gradient-bg"></div>
+
+    <header class="header">
+        <nav class="nav">
+            <a href="/" class="logo">
+                <span class="logo-icon">◆</span>
+                <span class="logo-text">Adaline</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="/product">Product</a></li>
+                <li><a href="/solutions">Solutions</a></li>
+                <li><a href="/pricing">Pricing</a></li>
+                <li><a href="/docs">Docs</a></li>
+                <li><a href="/blog">Blog</a></li>
+            </ul>
+            <div class="nav-actions">
+                <a href="/login" class="btn btn-ghost">Log in</a>
+                <a href="/demo" class="btn btn-primary">Get a demo</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-badge">
+                <span class="badge-dot"></span>
+                Now in public beta
+            </div>
+            <h1 class="hero-title">
+                <span class="gradient-text">AI Infrastructure</span>
+                <span>for the Enterprise</span>
+            </h1>
+            <p class="hero-description">
+                Build, deploy, and scale AI applications with confidence.
+                Enterprise-grade infrastructure that just works.
+            </p>
+            <div class="hero-actions">
+                <a href="/demo" class="btn btn-primary btn-lg">
+                    Request demo
+                </a>
+                <a href="/docs" class="btn btn-secondary btn-lg">
+                    Read docs
+                </a>
+            </div>
+
+            <div class="hero-stats">
+                <div class="stat">
+                    <span class="stat-value">99.99%</span>
+                    <span class="stat-label">Uptime SLA</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">&lt;50ms</span>
+                    <span class="stat-label">P99 Latency</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value">SOC 2</span>
+                    <span class="stat-label">Compliant</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="logos">
+            <p class="logos-title">Trusted by innovative teams</p>
+            <div class="logos-grid">
+                <div class="logo-item">TechCorp</div>
+                <div class="logo-item">StartupX</div>
+                <div class="logo-item">DataFlow</div>
+                <div class="logo-item">CloudScale</div>
+                <div class="logo-item">AILabs</div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="section-header">
+                <h2>Everything you need to ship AI</h2>
+                <p>From development to production, we've got you covered</p>
+            </div>
+
+            <div class="features-grid">
+                <article class="feature-card featured">
+                    <div class="feature-visual">
+                        <div class="code-window">
+                            <pre><code><span class="token-keyword">from</span> adaline <span class="token-keyword">import</span> Model
+
+model = Model.<span class="token-function">load</span>(<span class="token-string">"gpt-4"</span>)
+response = model.<span class="token-function">generate</span>(
+    prompt=<span class="token-string">"Explain quantum computing"</span>,
+    max_tokens=<span class="token-number">500</span>
+)</code></pre>
+                        </div>
+                    </div>
+                    <div class="feature-content">
+                        <h3>Unified API</h3>
+                        <p>One API for all major LLM providers. Switch models without changing code.</p>
+                    </div>
+                </article>
+
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <h3>Blazing Fast</h3>
+                    <p>Optimized routing and caching for sub-50ms response times.</p>
+                </article>
+
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <h3>Enterprise Security</h3>
+                    <p>SOC 2 Type II, HIPAA, and GDPR compliant out of the box.</p>
+                </article>
+
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                    </div>
+                    <h3>Full Observability</h3>
+                    <p>Real-time metrics, logs, and traces for every request.</p>
+                </article>
+
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                    </div>
+                    <h3>Auto Scaling</h3>
+                    <p>Automatically scale from zero to millions of requests.</p>
+                </article>
+
+                <article class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                        </svg>
+                    </div>
+                    <h3>Prompt Engineering</h3>
+                    <p>Built-in tools to test, version, and optimize your prompts.</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="integrations">
+            <div class="section-header">
+                <h2>Works with your stack</h2>
+                <p>Integrate with the tools you already use</p>
+            </div>
+
+            <div class="integrations-grid">
+                <div class="integration-card">
+                    <span class="integration-icon">🐍</span>
+                    <span>Python</span>
+                </div>
+                <div class="integration-card">
+                    <span class="integration-icon">📘</span>
+                    <span>TypeScript</span>
+                </div>
+                <div class="integration-card">
+                    <span class="integration-icon">🦀</span>
+                    <span>Rust</span>
+                </div>
+                <div class="integration-card">
+                    <span class="integration-icon">☁️</span>
+                    <span>AWS</span>
+                </div>
+                <div class="integration-card">
+                    <span class="integration-icon">🔷</span>
+                    <span>GCP</span>
+                </div>
+                <div class="integration-card">
+                    <span class="integration-icon">🔵</span>
+                    <span>Azure</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <div class="cta-content">
+                <h2>Ready to build with AI?</h2>
+                <p>Start building today with our free tier, or talk to us about enterprise plans.</p>
+                <div class="cta-actions">
+                    <a href="/signup" class="btn btn-primary btn-lg">Start for free</a>
+                    <a href="/contact" class="btn btn-secondary btn-lg">Contact sales</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <a href="/" class="logo">
+                    <span class="logo-icon">◆</span>
+                    <span class="logo-text">Adaline</span>
+                </a>
+                <p>AI infrastructure for the enterprise</p>
+            </div>
+
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="/features">Features</a></li>
+                        <li><a href="/pricing">Pricing</a></li>
+                        <li><a href="/changelog">Changelog</a></li>
+                        <li><a href="/roadmap">Roadmap</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="/docs">Documentation</a></li>
+                        <li><a href="/api">API Reference</a></li>
+                        <li><a href="/examples">Examples</a></li>
+                        <li><a href="/blog">Blog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/careers">Careers</a></li>
+                        <li><a href="/contact">Contact</a></li>
+                        <li><a href="/press">Press</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy">Privacy</a></li>
+                        <li><a href="/terms">Terms</a></li>
+                        <li><a href="/security">Security</a></li>
+                        <li><a href="/compliance">Compliance</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <span>&copy; 2024 Adaline, Inc. All rights reserved.</span>
+            <div class="social-links">
+                <a href="https://twitter.com" aria-label="Twitter">𝕏</a>
+                <a href="https://github.com" aria-label="GitHub">⌂</a>
+                <a href="https://linkedin.com" aria-label="LinkedIn">in</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

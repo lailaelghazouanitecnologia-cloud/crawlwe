@@ -1,11 +1,11 @@
-# Example capture: eduardbodak.com
-# Portfolio site with heavy animations (GSAP, Locomotive Scroll)
+# CrawlWe Capture: eduardbodak.com
+# Portfolio site with heavy animations (GSAP, Locomotive Scroll, Three.js)
 
 [meta]
 name = "eduard-bodak-portfolio"
 version = "1.0.0"
 generator = "crawlwe"
-captured_at = "2026-01-27T19:30:00Z"
+captured_at = "2026-01-27T19:45:00Z"
 
 [source]
 url = "https://www.eduardbodak.com/"
@@ -23,12 +23,21 @@ device_type = "desktop"
 css_framework = "custom"
 has_animations = true
 has_webgl = true
+has_smooth_scroll = true
 
 [technologies.detected_libs]
 gsap = { version = "3.12.2", category = "animation" }
 locomotive-scroll = { version = "4.1.4", category = "scroll" }
 three = { version = "0.158.0", category = "3d" }
 lenis = { category = "scroll" }
+
+[css_analysis]
+variables_count = 20
+keyframes_count = 2
+colors_count = 6
+fonts = ["Space Grotesk", "Inter", "JetBrains Mono"]
+has_media_queries = true
+has_custom_cursor = true
 
 [dependencies]
 
@@ -43,6 +52,15 @@ locomotive-scroll = "https://cdn.jsdelivr.net/npm/locomotive-scroll@4.1.4/dist/l
 
 [dependencies.fonts]
 "Space Grotesk" = { weights = ["400", "500", "700"], source = "google" }
+"Inter" = { weights = ["400", "500", "600"], source = "google" }
+"JetBrains Mono" = { weights = ["400"], source = "google" }
+
+[features]
+custom_cursor = true
+magnetic_buttons = true
+scroll_animations = true
+webgl_background = true
+split_text = true
 
 [export]
 minify_html = false
