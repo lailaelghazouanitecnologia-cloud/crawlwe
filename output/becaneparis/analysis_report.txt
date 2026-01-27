@@ -2,6 +2,13 @@
 DEEP ANALYSIS REPORT
 ================================================================================
 
+## CSS FRAMEWORKS & METHODOLOGY
+----------------------------------------
+✓ CSS MODULES DETECTED
+  Hashed classes: 62
+  Components: Headings, GridHelper, Panel, Button, ButtonBar, AdaptableWrapper, Collection, PageInfo, Bars, TextShuffle, TransversalBarItem, ItemBar, PageInfoLine, Background, Footer
+  Examples: PageInfo_wrapper__cUoPG, PageInfo_headings__cvUvj, Root_stickyContent__HSyVP, Button_wrapper__7fAqP, Header_button__GGQGX
+
 ## ANIMATIONS & MOTION
 ----------------------------------------
 ✓ CSS Keyframe Animations: 1
@@ -50,13 +57,13 @@ DEEP ANALYSIS REPORT
 ✓ shader_code: 5 occurrences
 
 Three.js Components:
-  Geometries: BoxGeometry, TetrahedronGeometry, CylinderGeometry, TorusGeometry, CircleGeometry, PlaneGeometry, BufferGeometry, RingGeometry, SphereGeometry, ConeGeometry
-  Materials: MeshBasicMaterial, RawShaderMaterial, ShaderMaterial, MeshPhongMaterial, MeshStandardMaterial, LineBasicMaterial, SpriteMaterial, MeshLambertMaterial, PointsMaterial
-  Lights: RectAreaLight, AmbientLight, PointLight, SpotLight, DirectionalLight, HemisphereLight
+  Geometries: CylinderGeometry, ConeGeometry, SphereGeometry, PlaneGeometry, TetrahedronGeometry, CircleGeometry, BoxGeometry, RingGeometry, BufferGeometry, TorusGeometry
+  Materials: LineBasicMaterial, SpriteMaterial, MeshBasicMaterial, RawShaderMaterial, MeshPhongMaterial, MeshLambertMaterial, MeshStandardMaterial, PointsMaterial, ShaderMaterial
+  Lights: PointLight, SpotLight, RectAreaLight, DirectionalLight, HemisphereLight, AmbientLight
 
 GLSL Shaders:
-  Uniforms: float tFlip, float scale, sampler2D metalnessMap, mat3 anisotropyMapTransform, sampler2D specularColorMap, mat3 uvTransform, HemisphereLight hemisphereLights, mat4 projectionMatrix, float uTime, mat3 clearcoatRoughnessMapTransform
-  Attributes: float faceIndex, vec3 normal, vec2 uv, vec4 tangent, vec3 color, vec4 color, vec3 position, vec4 skinIndex, mat4 instanceMatrix, vec2 uv2
+  Uniforms: sampler2D clearcoatNormalMap, float morphTargetInfluences, mat3 clearcoatNormalMapTransform, float displacementScale, float nearDistance, mat3 metalnessMapTransform, sampler2D transmissionMap, float fogFar, DirectionalLightShadow directionalLightShadows, float iridescenceThicknessMinimum
+  Attributes: vec4 color, vec2 uv, vec3 instanceColor, vec2 uv3, vec4 skinIndex, float faceIndex, vec2 uv1, vec4 skinWeight, mat4 instanceMatrix, vec3 normal
 
 ## LAYOUT TECHNIQUES
 ----------------------------------------

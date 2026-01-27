@@ -93,8 +93,8 @@
     },
     "visual_effects": {
       "shadows": [
-        "none\n}\n\nbody .shopify-pc__banner__wrapper {\n  flex-direction: column",
         "none !important",
+        "none\n}\n\nbody .shopify-pc__banner__wrapper {\n  flex-direction: column",
         "none !important\n}\n\nbody #shopify-pc__prefs button {\n  outline-color: transparent !important\n}\n\nbody #shopify-pc__prefs__overlay {\n  display: none\n}\n\nbody .shopify-pc__prefs__dialog {\n  top: unset"
       ],
       "filters": [
@@ -102,11 +102,11 @@
       ],
       "blend_modes": [],
       "clip_paths": [
-        "none\n}\n\n.Page_wrapper__4sVUY.Page_top-overlay-enter__QFTKO:not(.Page_shown__SSgUL),\n.Page_wrapper__4sVUY.Page_top-overlay-exit__BcOKB.Page_exiting__VysCL {\n  --clip: calc(var(--clip-progress) * var(--vh))",
-        "polygon(0 var(--clip), 100% var(--clip), 100% 100%, 0 100%)\n}\n\n.Page_wrapper__4sVUY:not(.Page_transparent__9_3wO) {\n  background-color: var(--color-background)",
-        "polygon(0 0, 100% 0, 100% var(--clip), 0 var(--clip))",
         "polygon(0 var(--clip), 100% var(--clip), 100% 100%, 0 100%)",
-        "polygon(0 0, 100% 0, 100% var(--clip), 0 var(--clip))\n}\n\n.Page_wrapper__4sVUY.Page_bottom-overlay-enter__PAZh0:not(.Page_shown__SSgUL),\n.Page_wrapper__4sVUY.Page_bottom-overlay-exit__BP_9t.Page_exiting__VysCL {\n  --clip: calc((1 - var(--clip-progress)) * var(--vh))"
+        "polygon(0 0, 100% 0, 100% var(--clip), 0 var(--clip))\n}\n\n.Page_wrapper__4sVUY.Page_bottom-overlay-enter__PAZh0:not(.Page_shown__SSgUL),\n.Page_wrapper__4sVUY.Page_bottom-overlay-exit__BP_9t.Page_exiting__VysCL {\n  --clip: calc((1 - var(--clip-progress)) * var(--vh))",
+        "polygon(0 0, 100% 0, 100% var(--clip), 0 var(--clip))",
+        "polygon(0 var(--clip), 100% var(--clip), 100% 100%, 0 100%)\n}\n\n.Page_wrapper__4sVUY:not(.Page_transparent__9_3wO) {\n  background-color: var(--color-background)",
+        "none\n}\n\n.Page_wrapper__4sVUY.Page_top-overlay-enter__QFTKO:not(.Page_shown__SSgUL),\n.Page_wrapper__4sVUY.Page_top-overlay-exit__BcOKB.Page_exiting__VysCL {\n  --clip: calc(var(--clip-progress) * var(--vh))"
       ]
     },
     "css_variables": {
@@ -159,18 +159,18 @@
     },
     "colors": {
       "palette": [
-        "rgb(255 255 255/var(--loading-opacity)",
-        "hsla(0, 0%, 96%, .8)",
-        "hsla(0, 0%, 4%, .369)",
+        "#666",
         "#f6f6f6",
         "#fff",
-        "#666",
-        "#b2b2b2",
+        "rgb(255 255 255/var(--loading-opacity)",
+        "hsla(0, 0%, 100%, 0)",
+        "hsla(0, 0%, 96%, .8)",
         "#000",
-        "rgba(0, 0, 0, 0)",
-        "#e6e6e6",
+        "hsla(0, 0%, 4%, .369)",
+        "#b2b2b2",
         "#0a0a0a",
-        "hsla(0, 0%, 100%, 0)"
+        "#e6e6e6",
+        "rgba(0, 0, 0, 0)"
       ],
       "gradients": [
         "radial-gradient",
@@ -179,22 +179,22 @@
     },
     "typography": {
       "font_families": [
-        "inherit",
+        "Eurostile Becane",
         "var(--main-font)",
-        "Eurostile Becane"
+        "inherit"
       ],
       "font_sizes": [
-        "8rem",
-        "20rem\n  }\n}\n\n.Headings_subtitle__XELi0 {\n  font-size: 8rem",
-        "12rem\n}\n\n@media screen and (max-width:900px) {\n  body {\n    font-size: 14rem\n  }\n}\n\n* {\n  box-sizing: border-box",
-        "12rem",
-        "20rem\n  }\n}\n\n.ComingSoon_wrapper__Mr2uT {\n  border: 1px solid hotpink",
-        "30rem",
-        "inherit",
         "var(--rem)",
+        "12rem",
+        "12rem\n}\n\n@media screen and (max-width:900px) {\n  body {\n    font-size: 14rem\n  }\n}\n\n* {\n  box-sizing: border-box",
+        "20rem\n  }\n}\n\n.ComingSoon_wrapper__Mr2uT {\n  border: 1px solid hotpink",
         "20rem\n  }\n}\n\n.composition_base__XQo6f {\n  font-size: 8rem",
+        "20rem\n  }\n}\n\n.Headings_subtitle__XELi0 {\n  font-size: 8rem",
+        "inherit",
         "100%\n}\n\nbody .shopify-pc__prefs__intro .shopify-pc__prefs__intro-main h3 {\n  margin: 0\n}\n\nbody .shopify-pc__prefs__options {\n  padding: 0\n}\n\nbody .shopify-pc__prefs__options .shopify-pc__prefs__option {\n  padding-top: var(--gap)",
-        "10rem"
+        "10rem",
+        "30rem",
+        "8rem"
       ]
     }
   },
@@ -221,11 +221,11 @@
         "detected": true,
         "occurrences": 154,
         "samples": [
-          "WebGLRenderer",
-          "THREE.",
-          "three.",
           "Scene()",
-          "Three."
+          "WebGLRenderer",
+          "PerspectiveCamera",
+          "three.",
+          "THREE."
         ]
       },
       "ogl": {
@@ -319,30 +319,30 @@
         "samples": [
           "MouseUp",
           "MouseEnter",
-          "MouseLeave",
-          "mousedown",
-          "mouseenter"
+          "mouseDown",
+          "mousemove",
+          "mousedown"
         ]
       },
       "touch_events": {
         "detected": true,
         "occurrences": 38,
         "samples": [
+          "TouchStart",
+          "touchend",
           "TouchEnd",
           "touchEnd",
-          "touchend",
-          "touchmove",
-          "touchMove"
+          "touchStart"
         ]
       },
       "pointer_events": {
         "detected": true,
         "occurrences": 30,
         "samples": [
-          "PointerDown",
           "pointerUp",
           "pointerup",
-          "pointerMove",
+          "PointerDown",
+          "pointerdown",
           "PointerUp"
         ]
       },
@@ -350,10 +350,10 @@
         "detected": true,
         "occurrences": 34,
         "samples": [
-          "Wheel",
           "mousewheel",
-          "MouseWheel",
           "DOMMouseScroll",
+          "Wheel",
+          "MouseWheel",
           "wheel"
         ]
       }
@@ -363,21 +363,21 @@
         "detected": true,
         "occurrences": 384,
         "samples": [
-          "createElement",
-          "jsx",
           "react.",
-          "React."
+          "React.",
+          "jsx",
+          "createElement"
         ]
       },
       "next_js": {
         "detected": true,
         "occurrences": 155,
         "samples": [
-          "_NEXT",
-          "__next",
-          "_next",
           "next/",
-          "__NEXT"
+          "_next",
+          "__NEXT",
+          "_NEXT",
+          "__next"
         ]
       }
     },
@@ -386,11 +386,11 @@
         "detected": true,
         "occurrences": 5,
         "samples": [
-          "shaderSource",
-          "ShaderSource",
-          "createShader",
           "createProgram",
-          "compileShader"
+          "createShader",
+          "shaderSource",
+          "compileShader",
+          "ShaderSource"
         ]
       }
     },
@@ -610,77 +610,77 @@
         "uTexture"
       ],
       "shader_uniforms": [
-        "sampler2D roughnessMap",
-        "sampler2D gradientMap",
-        "sampler2D shadow_pass",
-        "float envMapIntensity",
-        "float tFlip",
-        "sampler2D directionalShadowMap",
-        "sampler2D iridescenceMap",
-        "vec3 attenuationColor",
-        "float ior",
-        "bool receiveShadow",
-        "float metalness",
-        "mat3 lightMapTransform",
-        "mat4 spotLightMatrix",
-        "float opacity",
-        "float iridescenceIOR",
-        "sampler2D morphTexture",
-        "mat3 iridescenceThicknessMapTransform",
-        "mat4 bindMatrixInverse",
-        "highp usampler2D",
-        "mat3 clearcoatRoughnessMapTransform"
+        "sampler2D clearcoatNormalMap",
+        "float morphTargetInfluences",
+        "mat3 clearcoatNormalMapTransform",
+        "float displacementScale",
+        "float nearDistance",
+        "mat3 metalnessMapTransform",
+        "sampler2D transmissionMap",
+        "float fogFar",
+        "DirectionalLightShadow directionalLightShadows",
+        "float iridescenceThicknessMinimum",
+        "mat3 normalMatrix",
+        "sampler2DArray morphTargetsTexture",
+        "sampler2DArray depthColor",
+        "sampler2D lightMap",
+        "float thickness",
+        "vec3 ambientLightColor",
+        "mat3 roughnessMapTransform",
+        "float lightMapIntensity",
+        "sampler2D thicknessMap",
+        "float specularIntensity"
       ],
       "shader_attributes": [
-        "vec2 uv1",
-        "vec3 color",
-        "vec3 normal",
-        "is likely",
-        "float faceIndex",
-        "vec4 skinIndex",
-        "vec4 skinWeight",
-        "vec2 uv",
-        "vec2 uv3",
         "vec4 color",
+        "vec2 uv",
         "vec3 instanceColor",
-        "float lineDistance",
+        "vec2 uv3",
+        "vec4 skinIndex",
+        "float faceIndex",
+        "vec2 uv1",
+        "vec4 skinWeight",
         "mat4 instanceMatrix",
-        "vec3 position",
+        "vec3 normal",
+        "vec2 uv2",
         "vec4 tangent",
-        "vec2 uv2"
+        "vec3 color",
+        "is likely",
+        "vec3 position",
+        "float lineDistance"
       ]
     },
     "three_js_objects": {
       "geometries": [
-        "CircleGeometry",
         "CylinderGeometry",
-        "SphereGeometry",
-        "BufferGeometry",
-        "TorusGeometry",
-        "TetrahedronGeometry",
-        "BoxGeometry",
         "ConeGeometry",
+        "SphereGeometry",
         "PlaneGeometry",
-        "RingGeometry"
+        "TetrahedronGeometry",
+        "CircleGeometry",
+        "BoxGeometry",
+        "RingGeometry",
+        "BufferGeometry",
+        "TorusGeometry"
       ],
       "materials": [
-        "MeshStandardMaterial",
-        "SpriteMaterial",
-        "PointsMaterial",
-        "MeshLambertMaterial",
-        "MeshPhongMaterial",
-        "ShaderMaterial",
         "LineBasicMaterial",
+        "SpriteMaterial",
+        "MeshBasicMaterial",
         "RawShaderMaterial",
-        "MeshBasicMaterial"
+        "MeshPhongMaterial",
+        "MeshLambertMaterial",
+        "MeshStandardMaterial",
+        "PointsMaterial",
+        "ShaderMaterial"
       ],
       "lights": [
+        "PointLight",
         "SpotLight",
         "RectAreaLight",
         "DirectionalLight",
-        "AmbientLight",
-        "PointLight",
-        "HemisphereLight"
+        "HemisphereLight",
+        "AmbientLight"
       ],
       "controls": []
     },
@@ -689,10 +689,10 @@
         "detected": true,
         "occurrences": 239,
         "samples": [
-          "useEffect",
+          "useState",
           "useCallback",
           "useMemo",
-          "useState",
+          "useEffect",
           "useRef"
         ]
       },
@@ -708,8 +708,8 @@
         "detected": true,
         "occurrences": 13,
         "samples": [
-          "$:",
-          "Readable("
+          "Readable(",
+          "$:"
         ]
       }
     }
@@ -833,76 +833,76 @@
   "css_modules": {
     "detected": true,
     "hashed_classes": [
-      "TransversalBarItem_current__LWhTy",
-      "TransversalBarItem_wrapper__fnoPL",
-      "PageInfoLine_content__xcMmk",
-      "Footer_button__6TX0R",
-      "Panel_wrapper__V15ne",
-      "PageInfo_outer__nntOE",
-      "Header_buttons__17fhY",
-      "Header_bar__vsqrk",
-      "Page_wrapper__4sVUY",
-      "Button_wrapper__7fAqP",
-      "PageInfo_top__fCCae",
       "PageInfo_wrapper__cUoPG",
-      "PageInfo_bar__0AqVI",
-      "PageInfo_innerBar__x30Wq",
-      "Page_inner__rFalG",
-      "Footer_email__1D59l",
-      "Footer_left__U8YjQ",
-      "ItemBar_tail__Uv6Xh",
-      "TransversalBarItem_media__PINXA",
-      "Header_menu__w3kGA",
-      "Header_button__GGQGX",
-      "ButtonBar_wrapper__XGSlH",
-      "Headings_wrapper__75B9v",
-      "Header_inner__t5u43",
-      "TextShuffle_wrapper__TsMdF",
-      "Headings_title__JWnpi",
-      "Header_loader__zgn5f",
-      "Header_menuButton__IWoYC",
-      "Bars_bar__fFw9F",
-      "Root_sticky__DdJew",
-      "Footer_wrapper__yxAOD",
       "PageInfo_headings__cvUvj",
+      "Root_stickyContent__HSyVP",
+      "Button_wrapper__7fAqP",
+      "Header_button__GGQGX",
+      "Header_menuLine__6MY1X",
+      "Header_menu__w3kGA",
+      "AdaptableWrapper_inner__3Z2hJ",
       "GridHelper_gridHelperCol__90nQe",
-      "ItemBar_left__AnQt1",
-      "Header_logo__e4CTy",
+      "Panel_wrapper__V15ne",
+      "Headings_wrapper__75B9v",
+      "AdaptableWrapper_wrapper__bToAF",
+      "PageInfo_top__fCCae",
+      "Header_wrapper__SKB6q",
+      "PageInfo_bar__0AqVI",
+      "PageInfoLine_label__Rq2Gj",
+      "Root_sticky__DdJew",
+      "Page_wrapper__4sVUY",
+      "Collection_wrapper__Qkstw",
+      "Footer_wrapper__yxAOD",
+      "Header_bar__vsqrk",
+      "Headings_title__JWnpi",
+      "TextShuffle_wrapper__TsMdF",
+      "Header_line__t9nAr",
+      "Header_logoLink__PrpvB",
+      "Page_inner__rFalG",
       "ItemBar_outer__jsffw",
-      "Bars_topRight__K7ovG",
+      "PageInfo_inner__EjNFq",
+      "TransversalBarItem_wrapper__fnoPL",
+      "Header_menuButton__IWoYC",
       "ItemBar_wrapper__mjCTr",
+      "Header_logo__e4CTy",
+      "Background_wrapper__A7j5c",
+      "Footer_button__6TX0R",
+      "ButtonBar_wrapper__XGSlH",
+      "PageInfo_innerBar__x30Wq",
+      "Footer_manifesto__zyM5V",
+      "Bars_topRight__K7ovG",
+      "Footer_email__1D59l",
+      "PageInfoLine_content__xcMmk",
+      "Root_pageInfo__8FIkA",
+      "Footer_bars__O9FLM",
+      "Header_cartButton__a8L7R",
+      "Header_inner__t5u43",
+      "Footer_right__HN4fv",
       "Root_inner__cxF2x",
       "PageInfo_empty__Q0Iyx",
-      "AdaptableWrapper_wrapper__bToAF",
-      "AdaptableWrapper_inner__3Z2hJ",
-      "Collection_wrapper__Qkstw",
-      "Root_stickyContent__HSyVP",
-      "PageInfo_inner__EjNFq",
-      "Footer_right__HN4fv",
-      "Header_line__t9nAr",
-      "Background_wrapper__A7j5c",
-      "ItemBar_secondWrapper__mipps",
-      "Root_pageInfo__8FIkA"
+      "ItemBar_tail__Uv6Xh",
+      "Header_bottomBar__Tt30D",
+      "PageInfo_outer__nntOE"
     ],
     "component_names": [
+      "Headings",
       "GridHelper",
-      "AdaptableWrapper",
-      "TextShuffle",
-      "Button",
-      "PageInfoLine",
-      "Header",
-      "PageInfo",
-      "Background",
-      "Root",
       "Panel",
-      "Footer",
-      "TransversalBarItem",
+      "Button",
       "ButtonBar",
-      "Bars",
-      "ItemBar",
-      "Page",
+      "AdaptableWrapper",
       "Collection",
-      "Headings"
+      "PageInfo",
+      "Bars",
+      "TextShuffle",
+      "TransversalBarItem",
+      "ItemBar",
+      "PageInfoLine",
+      "Background",
+      "Footer",
+      "Page",
+      "Root",
+      "Header"
     ],
     "total_count": 62
   },
