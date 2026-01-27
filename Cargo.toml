@@ -28,7 +28,7 @@ chromiumoxide = { version = "0.7", default-features = false, features = ["tokio-
 # HTML/CSS Parsing
 html5ever = "0.27"
 markup5ever_rcdom = "0.3"
-lightningcss = { version = "1.0", default-features = false, features = ["selector_matching"] }
+# lightningcss = { version = "1.0.0-alpha.70" }  # Optional CSS parser
 
 # Regex
 regex = "1"

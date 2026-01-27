@@ -1,0 +1,77 @@
+// ZAD Example: Map types between different languages
+// Demonstrates switch blocks and conditional logic
+
+template map_type(source_type: string, target: string) {
+    switch (target) {
+        "rust" => {
+            switch (source_type) {
+                "string" => String,
+                "int" => i64,
+                "float" => f64,
+                "bool" => bool,
+                "list" => Vec<_>,
+                "map" => HashMap<String, _>,
+                _ => {source_type}
+            }
+        }
+        "typescript" => {
+            switch (source_type) {
+                "string" => string,
+                "int" => number,
+                "float" => number,
+                "bool" => boolean,
+                "list" => Array<unknown>,
+                "map" => Record<string, unknown>,
+                _ => {source_type}
+            }
+        }
+        "python" => {
+            switch (source_type) {
+                "string" => str,
+                "int" => int,
+                "float" => float,
+                "bool" => bool,
+                "list" => list,
+                "map" => dict,
+                _ => {source_type}
+            }
+        }
+        _ => {source_type}
+    }
+}
+
+template interface(name: string, fields: list, target: string) {
+    if (target == "typescript") {
+        interface {name} {
+            @indent
+            for (fields) |f| {
+                {f.name}: @use map_type(f.type, target);
+            }
+            @dedent
+        }
+    } else if (target == "rust") {
+        pub struct {name} {
+            @indent
+            for (fields) |f| {
+                pub {f.name}: @use map_type(f.type, target),
+            }
+            @dedent
+        }
+    } else {
+        @dataclass
+        class {name}:
+            @indent
+            for (fields) |f| {
+                {f.name}: @use map_type(f.type, target)
+            }
+            @dedent
+    }
+}
+
+// Example: Generate the same interface for different targets
+@use interface("Config", [
+    {name: "host", type: "string"},
+    {name: "port", type: "int"},
+    {name: "debug", type: "bool"},
+    {name: "options", type: "map"}
+], "rust")

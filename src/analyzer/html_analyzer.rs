@@ -41,8 +41,8 @@ impl HtmlAnalyzer {
 
     /// Estimate max depth (heuristic)
     fn estimate_max_depth(html: &str) -> usize {
-        let mut max_depth = 0;
-        let mut current_depth = 0;
+        let mut max_depth: usize = 0;
+        let mut current_depth: usize = 0;
 
         for c in html.chars() {
             if c == '<' {

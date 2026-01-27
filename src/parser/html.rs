@@ -3,7 +3,6 @@
 //! Provides HTML parsing, cleaning, and semantic structure extraction
 //! using html5ever for spec-compliant parsing.
 
-use crate::models::*;
 use html5ever::parse_document;
 use html5ever::tendril::TendrilSink;
 use html5ever::tree_builder::TreeBuilderOpts;
@@ -47,7 +46,6 @@ impl HtmlNode {
         }
     }
 
-    /// Get all used CSS classes in this node and descendants
     pub fn get_all_classes(&self) -> HashSet<String> {
         let mut classes = HashSet::new();
         self.collect_classes(&mut classes);
@@ -63,7 +61,6 @@ impl HtmlNode {
         }
     }
 
-    /// Get all used element IDs
     pub fn get_all_ids(&self) -> HashSet<String> {
         let mut ids = HashSet::new();
         self.collect_ids(&mut ids);
@@ -79,7 +76,6 @@ impl HtmlNode {
         }
     }
 
-    /// Get all tag names used
     pub fn get_all_tags(&self) -> HashSet<String> {
         let mut tags = HashSet::new();
         self.collect_tags(&mut tags);
@@ -93,12 +89,10 @@ impl HtmlNode {
         }
     }
 
-    /// Count total elements
     pub fn element_count(&self) -> usize {
         1 + self.children.iter().map(|c| c.element_count()).sum::<usize>()
     }
 
-    /// Find elements by tag name
     pub fn find_by_tag(&self, tag: &str) -> Vec<&HtmlNode> {
         let mut results = Vec::new();
         self.find_by_tag_recursive(tag, &mut results);
@@ -114,7 +108,6 @@ impl HtmlNode {
         }
     }
 
-    /// Find elements by class
     pub fn find_by_class(&self, class: &str) -> Vec<&HtmlNode> {
         let mut results = Vec::new();
         self.find_by_class_recursive(class, &mut results);
@@ -133,21 +126,13 @@ impl HtmlNode {
 
 /// HTML Parser for extracting clean DOM structure
 pub struct HtmlParser {
-    /// Remove script tags
     pub remove_scripts: bool,
-    /// Remove style tags
     pub remove_styles: bool,
-    /// Remove comments
     pub remove_comments: bool,
-    /// Remove data-* attributes
     pub remove_data_attrs: bool,
-    /// Remove framework-specific attributes (ng-*, v-*, etc)
     pub remove_framework_attrs: bool,
-    /// Remove empty elements
     pub remove_empty: bool,
-    /// Collapse whitespace in text
     pub collapse_whitespace: bool,
-    /// Tags to skip entirely
     pub skip_tags: HashSet<String>,
 }
 
@@ -178,7 +163,6 @@ impl HtmlParser {
         Self::default()
     }
 
-    /// Parse HTML string into AST
     pub fn parse(&self, html: &str) -> Result<HtmlNode, HtmlParserError> {
         let opts = ParseOpts {
             tree_builder: TreeBuilderOpts {
@@ -193,19 +177,14 @@ impl HtmlParser {
             .read_from(&mut html.as_bytes())
             .map_err(|e| HtmlParserError::ParseError(e.to_string()))?;
 
-        // Find the document element (html)
         let root = self.find_document_element(&dom.document)?;
-
         Ok(root)
     }
 
     fn find_document_element(&self, handle: &Handle) -> Result<HtmlNode, HtmlParserError> {
-        let node = handle.borrow();
-
-        match &node.data {
+        match &handle.data {
             NodeData::Document => {
-                // Search children for html element
-                for child in node.children.iter() {
+                for child in handle.children.borrow().iter() {
                     if let Ok(result) = self.find_document_element(child) {
                         if result.tag == "html" {
                             return Ok(result);
@@ -217,14 +196,12 @@ impl HtmlParser {
             NodeData::Element { name, attrs, .. } => {
                 let tag = name.local.to_string().to_lowercase();
 
-                // Skip certain tags
                 if self.skip_tags.contains(&tag) {
                     return Err(HtmlParserError::InvalidHtml("Skipped tag".to_string()));
                 }
 
                 let mut html_node = HtmlNode::new(tag.clone(), 0);
 
-                // Extract attributes
                 for attr in attrs.borrow().iter() {
                     let attr_name = attr.name.local.to_string();
                     let attr_value = attr.value.to_string();
@@ -238,11 +215,9 @@ impl HtmlParser {
                                 .collect();
                         }
                         "style" => {
-                            // Store inline styles separately if needed
                             html_node.attributes.insert("style".to_string(), attr_value);
                         }
                         _ => {
-                            // Filter attributes based on config
                             if self.should_keep_attribute(&attr_name) {
                                 html_node.attributes.insert(attr_name, attr_value);
                             }
@@ -250,8 +225,7 @@ impl HtmlParser {
                     }
                 }
 
-                // Process children
-                for child in node.children.iter() {
+                for child in handle.children.borrow().iter() {
                     if let Ok(child_node) = self.process_node(child, 1) {
                         html_node.children.push(child_node);
                     }
@@ -264,20 +238,16 @@ impl HtmlParser {
     }
 
     fn process_node(&self, handle: &Handle, depth: usize) -> Result<HtmlNode, HtmlParserError> {
-        let node = handle.borrow();
-
-        match &node.data {
+        match &handle.data {
             NodeData::Element { name, attrs, .. } => {
                 let tag = name.local.to_string().to_lowercase();
 
-                // Skip certain tags
                 if self.skip_tags.contains(&tag) {
                     return Err(HtmlParserError::InvalidHtml("Skipped tag".to_string()));
                 }
 
                 let mut html_node = HtmlNode::new(tag.clone(), depth);
 
-                // Extract attributes
                 for attr in attrs.borrow().iter() {
                     let attr_name = attr.name.local.to_string();
                     let attr_value = attr.value.to_string();
@@ -301,13 +271,10 @@ impl HtmlParser {
                     }
                 }
 
-                // Process children
                 let mut text_parts = Vec::new();
 
-                for child in node.children.iter() {
-                    let child_data = child.borrow();
-
-                    match &child_data.data {
+                for child in handle.children.borrow().iter() {
+                    match &child.data {
                         NodeData::Text { contents } => {
                             let text = contents.borrow().to_string();
                             let trimmed = if self.collapse_whitespace {
@@ -321,24 +288,19 @@ impl HtmlParser {
                             }
                         }
                         NodeData::Element { .. } => {
-                            drop(child_data);
                             if let Ok(child_node) = self.process_node(child, depth + 1) {
                                 html_node.children.push(child_node);
                             }
                         }
-                        NodeData::Comment { .. } => {
-                            // Skip comments
-                        }
+                        NodeData::Comment { .. } => {}
                         _ => {}
                     }
                 }
 
-                // Store accumulated text
                 if !text_parts.is_empty() {
                     html_node.text_content = Some(text_parts.join(" "));
                 }
 
-                // Skip empty elements if configured
                 if self.remove_empty
                     && html_node.children.is_empty()
                     && html_node.text_content.is_none()
@@ -354,25 +316,22 @@ impl HtmlParser {
     }
 
     fn should_keep_attribute(&self, name: &str) -> bool {
-        // Skip data-* attributes
         if self.remove_data_attrs && name.starts_with("data-") {
             return false;
         }
 
-        // Skip framework attributes
         if self.remove_framework_attrs {
             if name.starts_with("ng-")
                 || name.starts_with("v-")
                 || name.starts_with("x-")
-                || name.starts_with("_")
-                || name.starts_with("@")
-                || name.starts_with(":")
+                || name.starts_with('_')
+                || name.starts_with('@')
+                || name.starts_with(':')
             {
                 return false;
             }
         }
 
-        // Skip event handlers
         if name.starts_with("on") {
             return false;
         }
@@ -381,24 +340,11 @@ impl HtmlParser {
     }
 }
 
-/// Check if tag is a void element (self-closing)
 fn is_void_element(tag: &str) -> bool {
     matches!(
         tag,
-        "area"
-            | "base"
-            | "br"
-            | "col"
-            | "embed"
-            | "hr"
-            | "img"
-            | "input"
-            | "link"
-            | "meta"
-            | "param"
-            | "source"
-            | "track"
-            | "wbr"
+        "area" | "base" | "br" | "col" | "embed" | "hr" | "img" | "input"
+            | "link" | "meta" | "param" | "source" | "track" | "wbr"
     )
 }
 
@@ -432,7 +378,6 @@ impl HtmlGenerator {
         }
     }
 
-    /// Generate HTML string from AST
     pub fn generate(&self, node: &HtmlNode, stylesheet_path: Option<&str>) -> String {
         let mut html = String::new();
 
@@ -441,7 +386,6 @@ impl HtmlGenerator {
         }
 
         self.generate_node(&mut html, node, 0, stylesheet_path);
-
         html
     }
 
@@ -459,29 +403,25 @@ impl HtmlGenerator {
         };
         let newline = if self.minify { "" } else { "\n" };
 
-        // Opening tag
         html.push_str(&indent);
         html.push('<');
         html.push_str(&node.tag);
 
-        // ID attribute
         if let Some(id) = &node.element_id {
             html.push_str(" id=\"");
             html.push_str(&escape_html(id));
             html.push('"');
         }
 
-        // Classes
         if !node.classes.is_empty() {
             html.push_str(" class=\"");
             html.push_str(&node.classes.join(" "));
             html.push('"');
         }
 
-        // Other attributes
         for (name, value) in &node.attributes {
             if name == "style" {
-                continue; // Skip inline styles, we use external CSS
+                continue;
             }
             html.push(' ');
             html.push_str(name);
@@ -490,12 +430,10 @@ impl HtmlGenerator {
             html.push('"');
         }
 
-        // Insert stylesheet link in head
         if node.tag == "head" {
             html.push('>');
             html.push_str(newline);
 
-            // Add viewport meta
             html.push_str(&indent);
             html.push_str(&self.indent);
             html.push_str("<meta charset=\"utf-8\">");
@@ -506,7 +444,6 @@ impl HtmlGenerator {
             html.push_str("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
             html.push_str(newline);
 
-            // Add stylesheet link
             if let Some(path) = stylesheet_path {
                 html.push_str(&indent);
                 html.push_str(&self.indent);
@@ -516,7 +453,6 @@ impl HtmlGenerator {
                 html.push_str(newline);
             }
 
-            // Continue with children
             for child in &node.children {
                 self.generate_node(html, child, depth + 1, None);
             }
@@ -527,7 +463,6 @@ impl HtmlGenerator {
             return;
         }
 
-        // Void elements
         if is_void_element(&node.tag) {
             html.push_str(">");
             html.push_str(newline);
@@ -536,10 +471,8 @@ impl HtmlGenerator {
 
         html.push('>');
 
-        // Text content
         if let Some(text) = &node.text_content {
             if node.children.is_empty() {
-                // Inline text
                 html.push_str(&escape_html(text));
             } else {
                 html.push_str(newline);
@@ -549,7 +482,6 @@ impl HtmlGenerator {
             }
         }
 
-        // Children
         if !node.children.is_empty() {
             html.push_str(newline);
             for child in &node.children {
@@ -558,7 +490,6 @@ impl HtmlGenerator {
             html.push_str(&indent);
         }
 
-        // Closing tag
         html.push_str("</");
         html.push_str(&node.tag);
         html.push('>');
@@ -566,7 +497,6 @@ impl HtmlGenerator {
     }
 }
 
-/// Escape HTML special characters
 fn escape_html(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
@@ -575,7 +505,6 @@ fn escape_html(s: &str) -> String {
         .replace('\'', "&#x27;")
 }
 
-/// Generate a simple UUID v4
 fn uuid_v4() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -587,21 +516,17 @@ fn uuid_v4() -> String {
     format!("{:032x}", now)
 }
 
-/// Semantic analyzer - extracts semantic information from HTML
+/// Semantic analyzer
 pub struct SemanticAnalyzer;
 
 impl SemanticAnalyzer {
-    /// Analyze HTML structure and return semantic info
     pub fn analyze(node: &HtmlNode) -> SemanticInfo {
         let mut info = SemanticInfo::default();
-
         Self::analyze_recursive(node, &mut info);
-
         info
     }
 
     fn analyze_recursive(node: &HtmlNode, info: &mut SemanticInfo) {
-        // Count semantic tags
         match node.tag.as_str() {
             "header" => info.has_header = true,
             "nav" => info.has_nav = true,
@@ -620,7 +545,6 @@ impl SemanticAnalyzer {
             _ => {}
         }
 
-        // Detect layout patterns
         if node.classes.iter().any(|c| {
             c.contains("flex")
                 || c.contains("grid")
@@ -637,7 +561,6 @@ impl SemanticAnalyzer {
     }
 }
 
-/// Semantic information about HTML structure
 #[derive(Debug, Default)]
 pub struct SemanticInfo {
     pub has_header: bool,

@@ -3,10 +3,13 @@
 //! This library provides the Rust core for the CrawlWe web scraper.
 //! It handles: browser automation, HTML/CSS parsing, content analysis, and optimization.
 //!
+//! Also includes ZAD - a template metaprogramming language.
+//!
 //! Exposed to Python via PyO3.
 
 pub mod analyzer;
 pub mod models;
+pub mod zad;
 
 // Re-export from subdirectories
 pub mod capture {
@@ -18,8 +21,7 @@ pub mod parser {
     pub mod html;
 }
 
-use analyzer::{Analyzer, AnalysisResult};
-use models::*;
+use analyzer::Analyzer;
 
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
@@ -173,7 +175,7 @@ fn detect_ui_frameworks(js: &str) -> PyResult<String> {
 
 /// CrawlWe Core Python Module
 #[pymodule]
-fn crawlwe_core(m: &Bound<'_, PyModule>) -> PyResult<()> {
+fn crawlwe_core(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     // Analysis functions
     m.add_function(wrap_pyfunction!(analyze_content, m)?)?;
     m.add_function(wrap_pyfunction!(analyze_css, m)?)?;

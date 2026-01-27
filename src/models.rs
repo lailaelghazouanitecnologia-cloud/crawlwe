@@ -168,7 +168,6 @@ impl Specificity {
 }
 
 /// Source of a CSS rule
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum StyleSource {
     /// External stylesheet file
