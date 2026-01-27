@@ -303,7 +303,7 @@ fn generate_project_config(
         }
     }
 
-    // Add fonts
+    // Add fonts from CSS analysis
     for font in &css_analysis.fonts {
         config.dependencies.fonts.push(export::FontImport {
             family: font.clone(),
@@ -311,6 +311,26 @@ fn generate_project_config(
             source: "google".to_string(),
             url: Some(export::LibraryCDN::get_font_url(font, &["400".to_string(), "700".to_string()])),
         });
+    }
+
+    // Extract ALL external resources from HTML (catches everything we might have missed)
+    let extracted_scripts = export::ResourceExtractor::extract_scripts(html);
+    let extracted_styles = export::ResourceExtractor::extract_stylesheets(html);
+    let extracted_fonts = export::ResourceExtractor::extract_fonts(html);
+
+    // Merge extracted dependencies (avoids duplicates)
+    export::merge_dependencies(&mut config.dependencies.js, extracted_scripts);
+    export::merge_dependencies(&mut config.dependencies.css, extracted_styles);
+
+    // Add extracted fonts (check for duplicates by family name)
+    let existing_families: std::collections::HashSet<_> = config.dependencies.fonts
+        .iter()
+        .map(|f| f.family.to_lowercase())
+        .collect();
+    for font in extracted_fonts {
+        if !existing_families.contains(&font.family.to_lowercase()) {
+            config.dependencies.fonts.push(font);
+        }
     }
 
     // Generate TOML

@@ -6,7 +6,10 @@
 //! - scripts/main.js (relevant JS only)
 //! - project.toml (metadata and dependencies)
 
+pub mod extractor;
+
 use serde::{Deserialize, Serialize};
+pub use extractor::{ResourceExtractor, merge_dependencies};
 
 /// Project configuration and metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
