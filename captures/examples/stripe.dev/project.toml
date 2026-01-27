@@ -1,0 +1,46 @@
+# Example capture: stripe.dev
+# Developer documentation with clean design
+
+[meta]
+name = "stripe-developers"
+version = "1.0.0"
+generator = "crawlwe"
+captured_at = "2026-01-27T19:30:00Z"
+
+[source]
+url = "https://stripe.dev/"
+title = "Stripe Developers"
+language = "en"
+charset = "UTF-8"
+
+[source.viewport]
+width = 1440
+height = 900
+device_scale = 1.0
+device_type = "desktop"
+
+[technologies]
+css_framework = "custom"
+ui_framework = "react"
+has_animations = true
+
+[technologies.detected_libs]
+react = { version = "18.2.0", category = "ui" }
+next = { version = "14.0.0", category = "ui" }
+framer-motion = { version = "10.16.0", category = "animation" }
+
+[dependencies]
+
+[dependencies.scripts]
+# Bundled with Next.js
+
+[dependencies.styles]
+# Custom CSS
+
+[dependencies.fonts]
+"Inter" = { weights = ["400", "500", "600", "700"], source = "google" }
+"JetBrains Mono" = { weights = ["400", "500"], source = "google" }
+
+[export]
+minify_html = false
+minify_css = false

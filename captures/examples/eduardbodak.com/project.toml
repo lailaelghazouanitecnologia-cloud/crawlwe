@@ -1,0 +1,49 @@
+# Example capture: eduardbodak.com
+# Portfolio site with heavy animations (GSAP, Locomotive Scroll)
+
+[meta]
+name = "eduard-bodak-portfolio"
+version = "1.0.0"
+generator = "crawlwe"
+captured_at = "2026-01-27T19:30:00Z"
+
+[source]
+url = "https://www.eduardbodak.com/"
+title = "Eduard Bodak - Creative Developer"
+language = "en"
+charset = "UTF-8"
+
+[source.viewport]
+width = 1440
+height = 900
+device_scale = 1.0
+device_type = "desktop"
+
+[technologies]
+css_framework = "custom"
+has_animations = true
+has_webgl = true
+
+[technologies.detected_libs]
+gsap = { version = "3.12.2", category = "animation" }
+locomotive-scroll = { version = "4.1.4", category = "scroll" }
+three = { version = "0.158.0", category = "3d" }
+lenis = { category = "scroll" }
+
+[dependencies]
+
+[dependencies.scripts]
+gsap = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"
+gsap-scrolltrigger = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"
+three = "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.min.js"
+locomotive-scroll = "https://cdn.jsdelivr.net/npm/locomotive-scroll@4.1.4/dist/locomotive-scroll.min.js"
+
+[dependencies.styles]
+locomotive-scroll = "https://cdn.jsdelivr.net/npm/locomotive-scroll@4.1.4/dist/locomotive-scroll.min.css"
+
+[dependencies.fonts]
+"Space Grotesk" = { weights = ["400", "500", "700"], source = "google" }
+
+[export]
+minify_html = false
+minify_css = false

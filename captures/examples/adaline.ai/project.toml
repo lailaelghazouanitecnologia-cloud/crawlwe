@@ -1,0 +1,52 @@
+# Example capture: adaline.ai
+# AI platform with heavy animations and loading screens
+
+[meta]
+name = "adaline-ai"
+version = "1.0.0"
+generator = "crawlwe"
+captured_at = "2026-01-27T19:30:00Z"
+
+[source]
+url = "https://www.adaline.ai/"
+title = "Adaline - AI Infrastructure"
+language = "en"
+charset = "UTF-8"
+
+[source.viewport]
+width = 1440
+height = 900
+device_scale = 1.0
+device_type = "desktop"
+
+[technologies]
+css_framework = "tailwind"
+ui_framework = "react"
+has_animations = true
+has_webgl = true
+
+[technologies.detected_libs]
+react = { version = "18.2.0", category = "ui" }
+next = { version = "14.0.0", category = "ui" }
+gsap = { version = "3.12.2", category = "animation" }
+framer-motion = { version = "10.16.0", category = "animation" }
+three = { version = "0.158.0", category = "3d" }
+lottie-web = { version = "5.12.2", category = "animation" }
+
+[dependencies]
+
+[dependencies.scripts]
+gsap = "https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"
+three = "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.min.js"
+lottie = "https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"
+
+[dependencies.styles]
+tailwind = "https://cdn.tailwindcss.com"
+
+[dependencies.fonts]
+"Inter" = { weights = ["400", "500", "600", "700"], source = "google" }
+"Space Grotesk" = { weights = ["400", "500", "700"], source = "google" }
+
+[export]
+minify_html = false
+minify_css = false
