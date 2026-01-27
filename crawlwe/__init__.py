@@ -4,30 +4,34 @@ CrawlWe - Web Page Extractor for ML Training
 A powerful tool to extract clean HTML + CSS from web pages
 for training AI models to generate more natural designs.
 
+The main CLI is now in Rust (`crawlwe` binary).
+This Python package provides:
+  - PyO3 bindings to the Rust core
+  - High-level Python API for library usage
+
 Usage:
-    from crawlwe import capture, batch_capture, analyze
+    # Install Rust core
+    maturin develop
 
-    # Single page capture
-    result = capture("https://example.com")
-    print(result.html)
-    print(result.css)
+    # Use from Python
+    from crawlwe import analyze, detect_tailwind
 
-    # Analyze content
-    analysis = analyze(result.html, result.css)
-    print(analysis)
+    analysis = analyze(html, css, js)
+    tailwind = detect_tailwind(html, css)
 
-    # Batch capture
-    results = batch_capture(["url1", "url2", "url3"])
+CLI Usage (Rust):
+    crawlwe fetch <url>
+    crawlwe batch urls.txt
+    crawlwe analyze ./output
+    crawlwe export ./output
 """
 
 __version__ = "0.1.0"
 __author__ = "CrawlWe Team"
 
-from crawlwe.pipeline import capture, batch_capture, CaptureOptions, CaptureResult
-from crawlwe.writer import write_mockup, MockupWriter, merge_mockups, export_dataset
-
 # Try to import Rust core (compiled with maturin)
 RUST_AVAILABLE = False
+
 try:
     from crawlwe_core import (
         # Analysis functions
@@ -45,12 +49,17 @@ try:
         detect_webgpu,
         detect_animation_libraries,
         detect_ui_frameworks,
+        # Export functions
+        get_css_cdn,
+        get_js_cdn,
+        get_font_url,
+        generate_project_config,
         # Classes
         PageResult,
     )
     RUST_AVAILABLE = True
 except ImportError:
-    # Rust core not compiled - provide Python fallbacks
+    # Rust core not compiled - provide None placeholders
     analyze_content = None
     analyze_css = None
     analyze_js = None
@@ -63,6 +72,10 @@ except ImportError:
     detect_webgpu = None
     detect_animation_libraries = None
     detect_ui_frameworks = None
+    get_css_cdn = None
+    get_js_cdn = None
+    get_font_url = None
+    generate_project_config = None
     PageResult = None
 
 
@@ -70,7 +83,7 @@ def analyze(html: str = "", css: str = "", js: str = "") -> dict:
     """
     Analyze web content and return detailed analysis.
 
-    Uses Rust core if available, otherwise returns empty analysis.
+    Uses Rust core if available.
 
     Args:
         html: HTML content to analyze
@@ -91,17 +104,29 @@ def analyze(html: str = "", css: str = "", js: str = "") -> dict:
     }
 
 
+def generate_config(url: str, html: str, css: str, js: str = "", title: str = None) -> str:
+    """
+    Generate project.toml configuration for captured content.
+
+    Args:
+        url: Source URL
+        html: HTML content
+        css: CSS content
+        js: JavaScript content (optional)
+        title: Page title (optional)
+
+    Returns:
+        TOML configuration string
+    """
+    if RUST_AVAILABLE and generate_project_config:
+        return generate_project_config(url, html, css, js, title)
+    return "# Rust core not available"
+
+
 __all__ = [
     # High-level Python API
-    "capture",
-    "batch_capture",
-    "CaptureOptions",
-    "CaptureResult",
-    "write_mockup",
-    "MockupWriter",
-    "merge_mockups",
-    "export_dataset",
     "analyze",
+    "generate_config",
     # Rust bindings (when available)
     "analyze_content",
     "analyze_css",
@@ -115,6 +140,10 @@ __all__ = [
     "detect_webgpu",
     "detect_animation_libraries",
     "detect_ui_frameworks",
+    "get_css_cdn",
+    "get_js_cdn",
+    "get_font_url",
+    "generate_project_config",
     "PageResult",
     # Meta
     "RUST_AVAILABLE",

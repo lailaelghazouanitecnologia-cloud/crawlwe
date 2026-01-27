@@ -2,106 +2,150 @@
 
 **Web Page Extractor for ML Training** - Captures clean HTML + CSS from web pages to train AI models that generate more natural designs.
 
-## Installation (Windows/Linux/Mac)
+## Features
+
+- **Full Page Capture**: Renders JavaScript-heavy pages with Chromium
+- **CSS Extraction**: Captures all computed styles, variables, keyframes
+- **Library Detection**: Detects 50+ libraries (GSAP, Three.js, React, etc.)
+- **VM Parser**: Extensible bytecode VM for custom parsing
+- **Project Export**: Generates `project.toml` with dependencies
+
+## Installation
+
+### From Source (Rust)
 
 ```bash
-# Just install it!
-pip install -e .
+# Build the CLI
+cargo build --release
 
-# Or install from the directory
-cd crawlwe
-pip install .
+# Install globally
+cargo install --path .
 ```
 
-That's it! No Rust required.
+### Python Bindings
 
-## Usage
+```bash
+# Install with maturin
+pip install maturin
+maturin develop
 
-### Command Line
+# Use from Python
+python -c "from crawlwe import analyze; print(analyze('<div>test</div>', '', ''))"
+```
+
+## CLI Usage
 
 ```bash
 # Capture a single page
-python -m crawlwe fetch https://example.com -o output/
+crawlwe fetch https://example.com -o output/
 
-# Batch capture multiple URLs
-python -m crawlwe batch seeds.txt -o output/ --concurrent 5
+# Batch capture from file
+crawlwe batch urls.txt -o captures/
 
-# Analyze a page (without saving)
-python -m crawlwe analyze https://stripe.com
+# Analyze captured content
+crawlwe analyze ./output
 
-# Show system info
-python -m crawlwe info
-```
+# Generate project.toml
+crawlwe export ./output
 
-### Python API
-
-```python
-from crawlwe import capture, batch_capture, CaptureOptions
-from crawlwe.writer import write_mockup
-from pathlib import Path
-
-# Single capture
-result = capture("https://example.com")
-print(f"Elements: {result.element_count}")
-print(f"CSS Rules: {result.rule_count}")
-print(f"Colors: {result.colors}")
-
-# Save to disk
-write_mockup(result, Path("output"))
-
-# Batch capture
-urls = ["https://example.com", "https://example.org"]
-for result in batch_capture(urls, concurrent=3):
-    if not result.error:
-        write_mockup(result, Path("output"))
+# Parse with VM (advanced)
+crawlwe parse styles.css --program css_analyzer
 ```
 
 ## Output Structure
 
 ```
-output/example.com/
-├── index.html      # Clean HTML (no scripts, cleaned attributes)
-├── styles.css      # Unified CSS (all sources merged)
-├── screenshot.png  # Visual reference
-└── metadata.json   # Colors, fonts, CSS variables
+output/
+├── index.html       # Clean HTML (scripts removed)
+├── styles.css       # Unified CSS
+├── project.toml     # Dependencies and metadata
+├── screenshot.png   # Full page screenshot
+└── data/
+    ├── raw.html     # Original rendered HTML
+    └── metadata.json
 ```
 
-## Windows Instructions
+## Python API
 
-On Windows, after `pip install`, you may need to use `python -m` prefix:
+```python
+from crawlwe import analyze, detect_tailwind, generate_config
 
-```powershell
-# Instead of: crawlwe fetch ...
-python -m crawlwe fetch https://example.com -o output/
+# Analyze content
+result = analyze(html, css, js)
+print(result['css']['variables'])
+print(result['libraries'])
 
-# Or add Python Scripts to PATH:
-# %APPDATA%\Python\Python3X\Scripts
+# Detect frameworks
+tailwind = detect_tailwind(html, css)
+
+# Generate project config
+toml = generate_config("https://example.com", html, css, js, "My Page")
 ```
 
-## Features
+## Architecture
 
-| Feature | Python-only | With Rust |
-|---------|:-----------:|:---------:|
-| Basic HTML/CSS extraction | ✅ | ✅ |
-| CSS deduplication | ❌ | ✅ |
-| Capture :hover/:focus states | ❌ | ✅ |
-| Chrome headless | ❌ | ✅ |
-| Speed | Slow | Fast |
+```
+Input (URL)
+    │
+    ▼
+┌─────────────────┐
+│  Browser Capture │  chromiumoxide (Rust)
+│  HTML + CSS + JS │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Microparsers   │  CSS / JS / Library detection
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│       VM        │  Bytecode execution (optional)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Optimizer     │  Clean, deduplicate, format
+└────────┬────────┘
+         │
+         ▼
+Output (index.html, styles.css, project.toml)
+```
+
+## Library Detection
+
+Detects 50+ libraries including:
+
+- **Animation**: GSAP, Anime.js, Motion One, Framer Motion
+- **3D/Graphics**: Three.js, Babylon.js, PixiJS, P5.js
+- **UI**: React, Vue, Svelte, Alpine.js
+- **CSS**: Tailwind, Bootstrap, Bulma
+- **Scroll**: Locomotive Scroll, Lenis, ScrollMagic
 
 ## Project Structure
 
 ```
 crawlwe/
-├── crawlwe/           # Python package
-│   ├── cli.py         # Command-line interface
-│   ├── pipeline.py    # Capture orchestration
-│   └── writer.py      # Output handling
-├── rust/src/          # Rust core (optional)
-│   ├── browser.rs     # Chrome CDP client
-│   ├── css_parser.rs  # CSS optimization
-│   └── html_parser.rs # HTML cleaning
-├── setup.py           # Python-only install
-└── pyproject.toml     # Full install with Rust
+├── src/
+│   ├── main.rs           # CLI entry point
+│   ├── lib.rs            # PyO3 bindings
+│   ├── commands/         # CLI commands
+│   │   ├── fetch.rs      # Single page capture
+│   │   ├── batch.rs      # Batch capture
+│   │   ├── analyze.rs    # Content analysis
+│   │   ├── export.rs     # Project.toml generation
+│   │   └── parse.rs      # VM parser
+│   ├── pipeline/
+│   │   ├── microparsers.rs  # CSS/JS/Lib parsers
+│   │   └── optimizer.rs     # Content optimization
+│   ├── vm/
+│   │   ├── opcodes.rs    # Bytecode instructions
+│   │   ├── vm.rs         # Virtual machine
+│   │   └── compiler.rs   # DSL compiler
+│   └── export/           # Project config generation
+├── crawlwe/              # Python wrapper (legacy)
+├── captures/             # Example captures
+└── Cargo.toml
 ```
 
 ## License
