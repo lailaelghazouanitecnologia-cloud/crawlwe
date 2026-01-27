@@ -1,3 +1,0 @@
-// Source: https://www.becaneparis.com/_next/static/3-aZrQkvo-gU_e2ra1NMq/_ssgManifest.js?dpl=dpl_8WY4CByDjVspLdCpwrrye96vQnWg
-
-self.__SSG_MANIFEST=new Set(["\u002Fcollection\u002F[collectionHandle]","\u002Findexes\u002Fcollections","\u002Findexes\u002Fproducts","\u002Flooks\u002F[...looksParams]","\u002Fpage\u002F[slug]","\u002Fpage\u002Fprivacy-policy","\u002Fpage\u002Frefund-policy","\u002Fpage\u002Fshipping-policy","\u002Fpage\u002Fterms-of-service","\u002Fproducts\u002F[productHandle]","\u002Fstory\u002F[storyHandle]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()

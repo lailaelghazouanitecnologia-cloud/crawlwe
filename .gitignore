@@ -40,6 +40,11 @@ ENV/
 data/output/
 output/
 
+# Captures (keep README and examples only)
+captures/*
+!captures/README.md
+!captures/examples/
+
 # OS
 .DS_Store
 Thumbs.db
