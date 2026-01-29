@@ -40,10 +40,9 @@ ENV/
 data/output/
 output/
 
-# Captures (keep README and examples only)
+# Captures (generated locally, not uploaded)
 captures/*
-!captures/README.md
-!captures/examples/
+!captures/.gitkeep
 
 # OS
 .DS_Store
