@@ -102,6 +102,10 @@ impl BrowserController {
                 emulating_mobile: viewport.is_mobile,
                 ..Default::default()
             })
+            .arg("--no-sandbox")
+            .arg("--disable-setuid-sandbox")
+            .arg("--disable-dev-shm-usage")
+            .arg("--disable-gpu")
             .arg("--disable-web-security")
             .arg("--disable-features=IsolateOrigins,site-per-process")
             .arg("--disable-blink-features=AutomationControlled");

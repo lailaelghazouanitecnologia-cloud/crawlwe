@@ -43,6 +43,11 @@ pub async fn run(
     let (mut browser, mut handler) = Browser::launch(
         BrowserConfig::builder()
             .window_size(width, height)
+            .arg("--no-sandbox")
+            .arg("--disable-setuid-sandbox")
+            .arg("--disable-dev-shm-usage")
+            .arg("--disable-gpu")
+            .arg("--disable-blink-features=AutomationControlled")
             .build()
             .map_err(|e| format!("Failed to build browser config: {}", e))?,
     )
