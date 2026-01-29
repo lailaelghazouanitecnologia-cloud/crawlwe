@@ -2,20 +2,37 @@
 name = "crawlwe"
 version = "0.1.0"
 edition = "2021"
-description = "Fast web page scraper using Chrome DevTools Protocol"
+description = "Web page extractor for ML training - captures HTML + CSS with full fidelity"
 license = "MIT"
+
+[lib]
+name = "crawlwe_core"
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
 
 [[bin]]
 name = "crawlwe"
 path = "src/main.rs"
 
 [dependencies]
-# Async runtime
+# Python bindings
+pyo3 = { version = "0.20", features = ["extension-module"] }
+
+# Async
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
 
 # Chrome DevTools Protocol
 chromiumoxide = { version = "0.7", default-features = false, features = ["tokio-runtime"] }
+
+# HTML/CSS Parsing
+html5ever = "0.27"
+markup5ever_rcdom = "0.3"
+# lightningcss = { version = "1.0.0-alpha.70" }  # Optional CSS parser
+
+# Regex
+regex = "1"
+lazy_static = "1.4"
 
 # CLI
 clap = { version = "4", features = ["derive"] }
@@ -23,27 +40,19 @@ clap = { version = "4", features = ["derive"] }
 # Serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-toml = "0.8"
 
-# HTTP client (for downloading assets)
-reqwest = { version = "0.12", features = ["rustls-tls"], default-features = false }
-
-# URL parsing
-url = "2"
-
-# HTML parsing
-scraper = "0.22"
-
-# Regex
-regex = "1"
-
-# Time
+# Date/Time
 chrono = "0.4"
 
-# Base64
+# Utils
+thiserror = "1"
+url = "2"
 base64 = "0.22"
+regex-lite = "0.1"
 
 [profile.release]
-opt-level = 3
 lto = true
-codegen-units = 1
+opt-level = 3
+
+[profile.dev]
+opt-level = 1
