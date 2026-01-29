@@ -40,9 +40,8 @@ ENV/
 data/output/
 output/
 
-# Captures (generated locally, not uploaded)
-captures/*
-!captures/.gitkeep
+# Captures - generated content is uploaded
+# (empty - all captures are tracked)
 
 # OS
 .DS_Store
