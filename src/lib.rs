@@ -19,6 +19,7 @@ pub mod capture;
 pub mod vm;
 pub mod pipeline;
 pub mod js;
+pub mod css;
 
 pub mod parser {
     pub mod css;

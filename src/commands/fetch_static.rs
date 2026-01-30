@@ -12,6 +12,7 @@ use url::Url;
 use crawlwe_core::pipeline::{CssMicroparser, LibMicroparser, HtmlOptimizer, HtmlOptimizeOptions, DetectedLibrary, CssParseResult};
 use crawlwe_core::export::LibraryCDN;
 use crawlwe_core::js::{JsAnalyzer, LibraryRegistry};
+use crawlwe_core::css::{CssAssetExtractor, CssAssetExtractionResult, ImageContext};
 
 pub async fn run(
     url: &str,
@@ -754,6 +755,217 @@ fn extract_inline_svgs(html: &str, images_dir: &Path) -> (String, usize) {
 }
 
 // ============================================================================
+// COMPREHENSIVE CSS ASSET EXTRACTION (NEW!)
+// ============================================================================
+
+/// Download all CSS assets using the comprehensive CssAssetExtractor
+async fn download_css_assets_comprehensive(
+    client: &reqwest::Client,
+    css: &str,
+    base_url: &Url,
+    fonts_dir: &Path,
+    images_dir: &Path,
+) -> (String, CssAssetExtractionResult, HashMap<String, String>, HashMap<String, String>) {
+    let extractor = CssAssetExtractor::new();
+    let mut extraction = extractor.extract(css, base_url);
+
+    let mut result_css = css.to_string();
+    let mut font_url_map: HashMap<String, String> = HashMap::new();
+    let mut image_url_map: HashMap<String, String> = HashMap::new();
+
+    println!("   Asset extraction analysis:");
+    println!("     Total URLs found: {}", extraction.stats.total_urls_found);
+    println!("     Fonts: {} (+ {} local)",
+        extraction.stats.fonts_found,
+        extraction.fonts.iter().filter(|(k, _)| k.starts_with("local:")).count()
+    );
+    println!("     Images: {}", extraction.stats.images_found);
+    println!("     @imports: {}", extraction.stats.imports_found);
+    println!("     Data URIs skipped: {}", extraction.stats.data_uris_skipped);
+
+    if extraction.stats.invalid_urls > 0 {
+        println!("     Invalid URLs: {}", extraction.stats.invalid_urls);
+    }
+
+    // Download fonts
+    println!("\n   Downloading fonts:");
+    for (url, font_info) in &mut extraction.fonts {
+        // Skip local() references
+        if url.starts_with("local:") {
+            continue;
+        }
+
+        // Skip data URIs (shouldn't happen but be safe)
+        if url.starts_with("data:") {
+            continue;
+        }
+
+        match client.get(url.as_str()).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                match resp.bytes().await {
+                    Ok(bytes) => {
+                        // Generate filename from URL
+                        let filename = generate_asset_filename(url, "font", &font_info.format);
+                        let local_path = fonts_dir.join(&filename);
+
+                        if fs::write(&local_path, &bytes).is_ok() {
+                            let relative_path = format!("assets/fonts/{}", filename);
+                            font_url_map.insert(url.clone(), relative_path.clone());
+                            font_info.local_path = Some(relative_path.clone());
+
+                            // Show font metadata if available
+                            let meta = if let Some(family) = &font_info.font_family {
+                                format!(" [{}]", family)
+                            } else {
+                                String::new()
+                            };
+                            println!("     + {} ({} bytes){}", filename, bytes.len(), meta);
+
+                            // Replace URL in CSS
+                            result_css = result_css.replace(url, &relative_path);
+                        }
+                    }
+                    Err(e) => {
+                        extraction.errors.push(format!("Failed to read font bytes: {} - {}", url, e));
+                    }
+                }
+            }
+            Ok(resp) => {
+                extraction.errors.push(format!("Font HTTP {}: {}", resp.status(), url));
+            }
+            Err(e) => {
+                extraction.errors.push(format!("Font download failed: {} - {}", url, e));
+            }
+        }
+    }
+
+    // Download images
+    println!("\n   Downloading images:");
+    for (url, image_info) in &mut extraction.images {
+        // Skip data URIs
+        if url.starts_with("data:") {
+            continue;
+        }
+
+        // Skip already downloaded
+        if image_url_map.contains_key(url) {
+            continue;
+        }
+
+        match client.get(url.as_str()).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                match resp.bytes().await {
+                    Ok(bytes) => {
+                        let filename = generate_asset_filename(url, "image", &None);
+                        let local_path = images_dir.join(&filename);
+
+                        if fs::write(&local_path, &bytes).is_ok() {
+                            let relative_path = format!("assets/images/{}", filename);
+                            image_url_map.insert(url.clone(), relative_path.clone());
+                            image_info.local_path = Some(relative_path.clone());
+
+                            // Show context
+                            let context = match image_info.context {
+                                ImageContext::BackgroundImage => " [background]",
+                                ImageContext::BorderImage => " [border]",
+                                ImageContext::MaskImage => " [mask]",
+                                ImageContext::Cursor => " [cursor]",
+                                ImageContext::Content => " [content]",
+                                ImageContext::Filter => " [filter]",
+                                _ => "",
+                            };
+                            println!("     + {} ({} bytes){}", filename, bytes.len(), context);
+
+                            // Replace URL in CSS
+                            result_css = result_css.replace(url, &relative_path);
+                        }
+                    }
+                    Err(e) => {
+                        extraction.errors.push(format!("Failed to read image bytes: {} - {}", url, e));
+                    }
+                }
+            }
+            Ok(resp) => {
+                extraction.errors.push(format!("Image HTTP {}: {}", resp.status(), url));
+            }
+            Err(e) => {
+                extraction.errors.push(format!("Image download failed: {} - {}", url, e));
+            }
+        }
+    }
+
+    // Report errors
+    if !extraction.errors.is_empty() {
+        println!("\n   Asset errors ({}):", extraction.errors.len());
+        for err in extraction.errors.iter().take(10) {
+            println!("     ! {}", err);
+        }
+        if extraction.errors.len() > 10 {
+            println!("     ... and {} more", extraction.errors.len() - 10);
+        }
+    }
+
+    (result_css, extraction, font_url_map, image_url_map)
+}
+
+/// Generate a clean filename for an asset URL
+fn generate_asset_filename(url: &str, asset_type: &str, format_hint: &Option<String>) -> String {
+    // Try to extract filename from URL
+    if let Some(path) = url.split('?').next() {
+        if let Some(filename) = path.split('/').last() {
+            // Check if it's a valid filename with extension
+            if filename.contains('.') && filename.len() < 100 {
+                // Sanitize filename (remove special chars)
+                let clean: String = filename
+                    .chars()
+                    .filter(|c| c.is_alphanumeric() || *c == '.' || *c == '-' || *c == '_')
+                    .collect();
+                if !clean.is_empty() {
+                    return clean;
+                }
+            }
+        }
+    }
+
+    // Generate hash-based filename
+    use std::hash::{Hash, Hasher};
+    use std::collections::hash_map::DefaultHasher;
+    let mut hasher = DefaultHasher::new();
+    url.hash(&mut hasher);
+    let hash = hasher.finish();
+
+    // Determine extension
+    let ext = if let Some(fmt) = format_hint {
+        match fmt.as_str() {
+            "woff2" => "woff2",
+            "woff" => "woff",
+            "truetype" => "ttf",
+            "opentype" => "otf",
+            "embedded-opentype" => "eot",
+            _ => if asset_type == "font" { "woff2" } else { "png" }
+        }
+    } else {
+        // Try to detect from URL
+        let lower = url.to_lowercase();
+        if lower.contains(".woff2") { "woff2" }
+        else if lower.contains(".woff") { "woff" }
+        else if lower.contains(".ttf") { "ttf" }
+        else if lower.contains(".otf") { "otf" }
+        else if lower.contains(".eot") { "eot" }
+        else if lower.contains(".svg") { "svg" }
+        else if lower.contains(".png") { "png" }
+        else if lower.contains(".jpg") || lower.contains(".jpeg") { "jpg" }
+        else if lower.contains(".gif") { "gif" }
+        else if lower.contains(".webp") { "webp" }
+        else if lower.contains(".avif") { "avif" }
+        else if asset_type == "font" { "woff2" }
+        else { "png" }
+    };
+
+    format!("{}-{:016x}.{}", asset_type, hash, ext)
+}
+
+// ============================================================================
 // HYBRID MODE FUNCTIONS
 // ============================================================================
 
@@ -1066,18 +1278,16 @@ pub async fn run_hybrid(
 
     println!("\n   Total CSS: {} bytes", all_css.len());
 
-    // Phase 4: Download assets
-    println!("\n4. Downloading assets...");
+    // Phase 4: Download assets using comprehensive extractor
+    println!("\n4. Comprehensive Asset Extraction...");
 
-    // Fonts
-    println!("   Fonts:");
-    let (css_with_local_fonts, font_map) = download_fonts(&client, &all_css, &base_url, &fonts_dir).await;
-    println!("   Downloaded {} fonts", font_map.len());
+    // Use the new CssAssetExtractor for comprehensive extraction
+    let (css_with_local_assets, extraction_result, font_map, css_image_map) =
+        download_css_assets_comprehensive(&client, &all_css, &base_url, &fonts_dir, &images_dir).await;
 
-    // Images from CSS
-    println!("   CSS Images:");
-    let (css_with_local_assets, css_image_map) = download_css_images(&client, &css_with_local_fonts, &base_url, &images_dir).await;
-    println!("   Downloaded {} images from CSS", css_image_map.len());
+    println!("\n   Summary:");
+    println!("     Fonts downloaded: {}", font_map.len());
+    println!("     CSS images downloaded: {}", css_image_map.len());
 
     // Images from HTML
     println!("   HTML Images:");
@@ -1143,7 +1353,7 @@ pub async fn run_hybrid(
     fs::write(output.join("styles.css"), final_css)?;
     println!("   + styles.css");
 
-    // Metadata
+    // Metadata (including comprehensive extraction details)
     let total_images = css_image_map.len() + html_image_map.len() + nextjs_image_map.len() + svg_map.len();
     let metadata = serde_json::json!({
         "url": url,
@@ -1164,6 +1374,16 @@ pub async fn run_hybrid(
             "svgs_downloaded": svg_map.len(),
             "svgs_extracted": inline_svg_count,
             "html_classes": html_classes.len(),
+        },
+        "asset_extraction": {
+            "total_urls_found": extraction_result.stats.total_urls_found,
+            "fonts_found": extraction_result.stats.fonts_found,
+            "images_found": extraction_result.stats.images_found,
+            "imports_found": extraction_result.stats.imports_found,
+            "data_uris_skipped": extraction_result.stats.data_uris_skipped,
+            "invalid_urls": extraction_result.stats.invalid_urls,
+            "local_fonts": extraction_result.fonts.iter().filter(|(k, _)| k.starts_with("local:")).count(),
+            "errors": extraction_result.errors.len(),
         },
         "css_analysis": {
             "variables": css_parsed.variables.len(),
