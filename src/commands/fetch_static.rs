@@ -4,6 +4,7 @@
 //! Limitations: No JavaScript execution, no computed styles.
 
 use regex::Regex;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use url::Url;
@@ -30,8 +31,13 @@ pub async fn run(
     // Create output structure
     let data_dir = output.join("data");
     let scripts_dir = output.join("scripts");
+    let assets_dir = output.join("assets");
+    let fonts_dir = assets_dir.join("fonts");
+    let images_dir = assets_dir.join("images");
     fs::create_dir_all(&data_dir)?;
     fs::create_dir_all(&scripts_dir)?;
+    fs::create_dir_all(&fonts_dir)?;
+    fs::create_dir_all(&images_dir)?;
 
     // Download HTML
     println!("Downloading HTML...");
@@ -80,6 +86,20 @@ pub async fn run(
 
     println!("  Total CSS: {} bytes", all_css.len());
 
+    // Download fonts from CSS
+    println!("\nDownloading fonts...");
+    let (css_with_local_fonts, font_map) = download_fonts(&client, &all_css, &base_url, &fonts_dir).await;
+    println!("  Downloaded {} fonts", font_map.len());
+
+    // Download images from CSS
+    println!("\nDownloading images...");
+    let (css_with_local_assets, image_map) = download_css_images(&client, &css_with_local_fonts, &base_url, &images_dir).await;
+    println!("  Downloaded {} images from CSS", image_map.len());
+
+    // Download images from HTML
+    let (html_with_local_images, html_image_map) = download_html_images(&client, &html_raw, &base_url, &images_dir).await;
+    println!("  Downloaded {} images from HTML", html_image_map.len());
+
     // Extract external scripts
     println!("\nFinding scripts...");
     let script_urls = extract_script_urls(&html_raw, &base_url);
@@ -96,16 +116,15 @@ pub async fn run(
     }
 
     // Parse CSS
-    let css_parsed = CssMicroparser::parse(&all_css);
+    let css_parsed = CssMicroparser::parse(&css_with_local_assets);
     println!("\nCSS Analysis:");
     println!("  Variables: {}", css_parsed.variables.len());
     println!("  Keyframes: {}", css_parsed.keyframes.len());
     println!("  Colors: {}", css_parsed.colors.len());
-    println!("  Fonts: {:?}", css_parsed.fonts);
 
     // Optimize
     println!("\nOptimizing...");
-    let html_optimized = HtmlOptimizer::optimize(&html_raw, &HtmlOptimizeOptions {
+    let html_optimized = HtmlOptimizer::optimize(&html_with_local_images, &HtmlOptimizeOptions {
         remove_comments: true,
         remove_scripts: true,
         remove_styles: false,
@@ -117,16 +136,17 @@ pub async fn run(
         preserve_structure: true,
     });
 
-    let css_optimized = CssOptimizer::optimize(&all_css, &CssOptimizeOptions::default());
+    // Don't optimize CSS to keep local asset URLs intact
+    let final_css = &css_with_local_assets;
 
     println!("  HTML: {} -> {} bytes", html_raw.len(), html_optimized.stats.optimized_size);
-    println!("  CSS: {} -> {} bytes", all_css.len(), css_optimized.stats.optimized_size);
+    println!("  CSS: {} bytes (with local assets)", final_css.len());
 
     // Save files
     println!("\nSaving files...");
 
-    // Clean HTML with embedded CSS and base href for assets
-    let clean_html = generate_clean_html(&html_optimized.html, &title, url, &css_optimized.css);
+    // Clean HTML with embedded CSS (no base href needed - assets are local)
+    let clean_html = generate_clean_html_local(&html_optimized.html, &title, final_css);
     fs::write(output.join("index.html"), &clean_html)?;
     println!("  index.html");
 
@@ -135,7 +155,7 @@ pub async fn run(
     println!("  data/raw.html");
 
     // CSS
-    fs::write(output.join("styles.css"), &css_optimized.css)?;
+    fs::write(output.join("styles.css"), final_css)?;
     println!("  styles.css");
 
     // Metadata
@@ -148,16 +168,16 @@ pub async fn run(
         "stats": {
             "html_bytes": html_raw.len(),
             "html_optimized_bytes": html_optimized.stats.optimized_size,
-            "css_bytes": all_css.len(),
-            "css_optimized_bytes": css_optimized.stats.optimized_size,
+            "css_bytes": final_css.len(),
             "external_scripts": script_urls.len(),
             "external_styles": css_urls.len(),
+            "fonts_downloaded": font_map.len(),
+            "images_downloaded": image_map.len() + html_image_map.len(),
         },
         "css_analysis": {
             "variables": css_parsed.variables.len(),
             "keyframes": css_parsed.keyframes.len(),
             "colors": css_parsed.colors.len(),
-            "fonts": css_parsed.fonts,
         },
         "detected_libs": lib_result.libraries.iter().map(|l| {
             serde_json::json!({
@@ -347,4 +367,214 @@ fn sanitize_name(name: &str) -> String {
         .collect::<String>()
         .trim_matches('-')
         .to_string()
+}
+
+fn generate_clean_html_local(html: &str, title: &str, css: &str) -> String {
+    // No base href - all assets are local
+    let head = format!(
+        r#"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{}</title>
+    <style>
+{}
+    </style>
+</head>"#,
+        title, css
+    );
+
+    if let Some(body_start) = html.find("<body") {
+        if let Some(body_end) = html.rfind("</body>") {
+            let body = &html[body_start..body_end + 7];
+            return format!("{}\n{}\n</html>", head, body);
+        }
+    }
+
+    format!("{}\n<body>\n{}\n</body>\n</html>", head, html)
+}
+
+async fn download_fonts(
+    client: &reqwest::Client,
+    css: &str,
+    base_url: &Url,
+    fonts_dir: &Path,
+) -> (String, HashMap<String, String>) {
+    let mut result_css = css.to_string();
+    let mut downloaded: HashMap<String, String> = HashMap::new();
+
+    // Match url() in @font-face blocks
+    let re = Regex::new(r#"url\(["']?([^)"']+\.(?:woff2?|ttf|otf|eot))["']?\)"#).unwrap();
+
+    for cap in re.captures_iter(css) {
+        let font_path = &cap[1];
+
+        // Skip already processed or data URLs
+        if font_path.starts_with("data:") || font_path.starts_with("assets/") {
+            continue;
+        }
+
+        // Resolve full URL
+        let font_url = if font_path.starts_with("http") {
+            font_path.to_string()
+        } else {
+            match base_url.join(font_path) {
+                Ok(u) => u.to_string(),
+                Err(_) => continue,
+            }
+        };
+
+        // Skip if already downloaded
+        if downloaded.contains_key(&font_url) {
+            continue;
+        }
+
+        // Download font
+        match client.get(&font_url).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                match resp.bytes().await {
+                    Ok(bytes) => {
+                        // Generate local filename
+                        let filename = font_path.split('/').last().unwrap_or("font.woff2");
+                        let local_path = fonts_dir.join(filename);
+
+                        if fs::write(&local_path, &bytes).is_ok() {
+                            let relative_path = format!("assets/fonts/{}", filename);
+                            downloaded.insert(font_url.clone(), relative_path.clone());
+                            println!("    + {}", filename);
+
+                            // Replace in CSS
+                            result_css = result_css.replace(font_path, &relative_path);
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+            _ => {}
+        }
+    }
+
+    (result_css, downloaded)
+}
+
+async fn download_css_images(
+    client: &reqwest::Client,
+    css: &str,
+    base_url: &Url,
+    images_dir: &Path,
+) -> (String, HashMap<String, String>) {
+    let mut result_css = css.to_string();
+    let mut downloaded: HashMap<String, String> = HashMap::new();
+
+    // Match url() for images (not fonts)
+    let re = Regex::new(r#"url\(["']?([^)"']+\.(?:png|jpg|jpeg|gif|svg|webp|ico))["']?\)"#).unwrap();
+
+    for cap in re.captures_iter(css) {
+        let img_path = &cap[1];
+
+        if img_path.starts_with("data:") || img_path.starts_with("assets/") {
+            continue;
+        }
+
+        let img_url = if img_path.starts_with("http") {
+            img_path.to_string()
+        } else {
+            match base_url.join(img_path) {
+                Ok(u) => u.to_string(),
+                Err(_) => continue,
+            }
+        };
+
+        if downloaded.contains_key(&img_url) {
+            continue;
+        }
+
+        match client.get(&img_url).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                match resp.bytes().await {
+                    Ok(bytes) => {
+                        let filename = img_path.split('/').last().unwrap_or("image.png");
+                        let local_path = images_dir.join(filename);
+
+                        if fs::write(&local_path, &bytes).is_ok() {
+                            let relative_path = format!("assets/images/{}", filename);
+                            downloaded.insert(img_url.clone(), relative_path.clone());
+                            println!("    + {} ({} bytes)", filename, bytes.len());
+
+                            result_css = result_css.replace(img_path, &relative_path);
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+            _ => {}
+        }
+    }
+
+    (result_css, downloaded)
+}
+
+async fn download_html_images(
+    client: &reqwest::Client,
+    html: &str,
+    base_url: &Url,
+    images_dir: &Path,
+) -> (String, HashMap<String, String>) {
+    let mut result_html = html.to_string();
+    let mut downloaded: HashMap<String, String> = HashMap::new();
+
+    // Match src="" for images
+    let re = Regex::new(r#"src=["']([^"']+\.(?:png|jpg|jpeg|gif|svg|webp|ico))["']"#).unwrap();
+
+    for cap in re.captures_iter(html) {
+        let img_path = &cap[1];
+
+        if img_path.starts_with("data:") || img_path.starts_with("assets/") {
+            continue;
+        }
+
+        let img_url = if img_path.starts_with("http") {
+            img_path.to_string()
+        } else {
+            match base_url.join(img_path) {
+                Ok(u) => u.to_string(),
+                Err(_) => continue,
+            }
+        };
+
+        if downloaded.contains_key(&img_url) {
+            continue;
+        }
+
+        match client.get(&img_url).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                match resp.bytes().await {
+                    Ok(bytes) => {
+                        let filename = img_path.split('/').last().unwrap_or("image.png");
+                        let local_path = images_dir.join(filename);
+
+                        if fs::write(&local_path, &bytes).is_ok() {
+                            let relative_path = format!("assets/images/{}", filename);
+                            downloaded.insert(img_url.clone(), relative_path.clone());
+                            println!("    + {} ({} bytes)", filename, bytes.len());
+
+                            // Replace src in HTML
+                            let old_src = format!("src=\"{}\"", img_path);
+                            let new_src = format!("src=\"{}\"", relative_path);
+                            result_html = result_html.replace(&old_src, &new_src);
+
+                            let old_src = format!("src='{}'", img_path);
+                            let new_src = format!("src='{}'", relative_path);
+                            result_html = result_html.replace(&old_src, &new_src);
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+            _ => {}
+        }
+    }
+
+    (result_html, downloaded)
 }
