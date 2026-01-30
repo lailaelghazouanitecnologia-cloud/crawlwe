@@ -3,7 +3,7 @@ name = "stripe-dot-dev"
 version = "1.0.0"
 generator = "crawlwe"
 mode = "static"
-captured_at = "2026-01-30T20:56:23.404798639+00:00"
+captured_at = "2026-01-30T21:06:21.716978016+00:00"
 
 [source]
 url = "https://stripe.dev/"

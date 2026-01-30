@@ -11,7 +11,7 @@ use url::Url;
 
 use crawlwe_core::pipeline::{CssMicroparser, LibMicroparser, HtmlOptimizer, HtmlOptimizeOptions, DetectedLibrary, CssParseResult};
 use crawlwe_core::export::LibraryCDN;
-use crawlwe_core::js::{JsAnalyzer, LibraryRegistry};
+use crawlwe_core::js::{JsAnalyzer, LibraryRegistry, JsToCssConverter};
 use crawlwe_core::css::{CssAssetExtractor, CssAssetExtractionResult, ImageContext};
 
 pub async fn run(
@@ -1503,6 +1503,38 @@ async fn analyze_js_with_library_parsers(
         for lib in &detected {
             println!("    - {} ({})", lib.name, lib.category.as_str());
         }
+    }
+
+    // NEW: Use JsToCssConverter for comprehensive JS to CSS conversion
+    println!("   Converting JS styles to CSS...");
+    let mut converter = JsToCssConverter::new();
+    let conversion_result = converter.convert(&all_js_code);
+
+    // Report conversion stats
+    if conversion_result.stats.styled_components_found > 0 {
+        println!("     Styled-components: {}", conversion_result.stats.styled_components_found);
+    }
+    if conversion_result.stats.emotion_blocks_found > 0 {
+        println!("     Emotion/css blocks: {}", conversion_result.stats.emotion_blocks_found);
+    }
+    if conversion_result.stats.gsap_animations_found > 0 {
+        println!("     GSAP animations: {}", conversion_result.stats.gsap_animations_found);
+    }
+    if conversion_result.stats.framer_animations_found > 0 {
+        println!("     Framer Motion: {}", conversion_result.stats.framer_animations_found);
+    }
+    if conversion_result.stats.keyframes_generated > 0 {
+        println!("     Keyframes generated: {}", conversion_result.stats.keyframes_generated);
+    }
+    if conversion_result.stats.inline_styles_converted > 0 {
+        println!("     Inline styles converted: {}", conversion_result.stats.inline_styles_converted);
+    }
+
+    // Add converted CSS
+    if !conversion_result.css.is_empty() {
+        generated_css.push_str("\n/* === JS to CSS Conversion === */\n");
+        generated_css.push_str(&conversion_result.css);
+        generated_css.push_str("\n");
     }
 
     // Run library-specific analysis
