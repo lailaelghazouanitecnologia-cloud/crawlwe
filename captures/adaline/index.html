@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaline - The Gateway API for AI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">
+                <a href="/">
+                    <img src="assets/logo.svg" alt="Adaline" class="logo-img">
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/docs">Docs</a></li>
+                <li><a href="/pricing">Pricing</a></li>
+                <li><a href="/blog">Blog</a></li>
+                <li><a href="/login" class="btn btn-secondary">Login</a></li>
+                <li><a href="/signup" class="btn btn-primary">Get Started</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">The Gateway API for AI</h1>
+                <p class="hero-subtitle">
+                    One API to access all LLM providers. Switch between OpenAI, Anthropic,
+                    Google, and more with a single line of code.
+                </p>
+                <div class="hero-cta">
+                    <a href="/signup" class="btn btn-primary btn-lg">Start Building</a>
+                    <a href="/docs" class="btn btn-outline btn-lg">Read Docs</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="code-block">
+                    <pre><code class="language-python">
+from adaline import Gateway
+
+gateway = Gateway()
+
+response = gateway.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+
+# Switch provider with one line
+response = gateway.chat.completions.create(
+    model="claude-3-opus",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+                    </code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <h2 class="section-title">Why Adaline?</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/></svg>
+                    </div>
+                    <h3>Unified API</h3>
+                    <p>Single interface for all major LLM providers</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    </div>
+                    <h3>Fast Switching</h3>
+                    <p>Change models instantly without code changes</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h3>Enterprise Ready</h3>
+                    <p>SOC2 compliant with advanced security</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+                    </div>
+                    <h3>Cost Optimization</h3>
+                    <p>Smart routing to minimize API costs</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="providers">
+            <h2 class="section-title">Supported Providers</h2>
+            <div class="providers-grid">
+                <div class="provider-logo">OpenAI</div>
+                <div class="provider-logo">Anthropic</div>
+                <div class="provider-logo">Google</div>
+                <div class="provider-logo">Mistral</div>
+                <div class="provider-logo">Cohere</div>
+                <div class="provider-logo">AWS Bedrock</div>
+            </div>
+        </section>
+
+        <section class="cta-section">
+            <h2>Ready to get started?</h2>
+            <p>Join thousands of developers building with Adaline</p>
+            <a href="/signup" class="btn btn-primary btn-lg">Start Free Trial</a>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <img src="assets/logo.svg" alt="Adaline">
+                <p>The Gateway API for AI</p>
+            </div>
+            <div class="footer-links">
+                <div class="footer-column">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="/docs">Documentation</a></li>
+                        <li><a href="/pricing">Pricing</a></li>
+                        <li><a href="/changelog">Changelog</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="/about">About</a></li>
+                        <li><a href="/blog">Blog</a></li>
+                        <li><a href="/careers">Careers</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="/privacy">Privacy</a></li>
+                        <li><a href="/terms">Terms</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 Adaline. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
