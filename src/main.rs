@@ -79,6 +79,10 @@ enum Commands {
         /// Use static HTTP fetch (no browser, faster but no JS rendering)
         #[arg(long)]
         r#static: bool,
+
+        /// Use hybrid mode (static + CSS discovery + JS extraction)
+        #[arg(long)]
+        hybrid: bool,
     },
 
     /// Capture multiple pages from a file (one URL per line)
@@ -151,8 +155,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             detect_libs,
             project_toml,
             r#static,
+            hybrid,
         } => {
-            if r#static {
+            if hybrid {
+                commands::fetch_static::run_hybrid(&url, &output, project_toml).await?;
+            } else if r#static {
                 commands::fetch_static::run(&url, &output, project_toml).await?;
             } else {
                 commands::fetch::run(

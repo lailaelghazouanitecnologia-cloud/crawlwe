@@ -751,3 +751,448 @@ fn extract_inline_svgs(html: &str, images_dir: &Path) -> (String, usize) {
 
     (result_html, count)
 }
+
+// ============================================================================
+// HYBRID MODE FUNCTIONS
+// ============================================================================
+
+/// Resolve @import statements in CSS and fetch the imported stylesheets
+async fn resolve_css_imports(
+    client: &reqwest::Client,
+    css: &str,
+    base_url: &Url,
+    depth: usize,
+) -> String {
+    if depth > 5 {
+        return css.to_string(); // Prevent infinite recursion
+    }
+
+    let mut result_css = css.to_string();
+
+    // Match @import url("...") or @import "..."
+    let re = Regex::new(r#"@import\s+(?:url\()?["']([^"']+)["']\)?[^;]*;"#).unwrap();
+
+    let mut imports_to_resolve: Vec<(String, String)> = Vec::new();
+
+    for cap in re.captures_iter(css) {
+        let import_path = &cap[1];
+        let full_match = cap.get(0).unwrap().as_str();
+
+        // Skip data URLs
+        if import_path.starts_with("data:") {
+            continue;
+        }
+
+        let import_url = if import_path.starts_with("http") {
+            import_path.to_string()
+        } else {
+            match base_url.join(import_path) {
+                Ok(u) => u.to_string(),
+                Err(_) => continue,
+            }
+        };
+
+        imports_to_resolve.push((full_match.to_string(), import_url));
+    }
+
+    for (import_statement, import_url) in imports_to_resolve {
+        match client.get(&import_url).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                if let Ok(imported_css) = resp.text().await {
+                    println!("    + @import: {}", shorten_url(&import_url));
+
+                    // Recursively resolve imports in the imported CSS
+                    let import_base = Url::parse(&import_url).unwrap_or(base_url.clone());
+                    let resolved_import = Box::pin(resolve_css_imports(
+                        client,
+                        &imported_css,
+                        &import_base,
+                        depth + 1,
+                    )).await;
+
+                    // Replace @import with actual CSS content
+                    result_css = result_css.replace(
+                        &import_statement,
+                        &format!("/* Imported from: {} */\n{}\n", import_url, resolved_import),
+                    );
+                }
+            }
+            _ => {
+                println!("    ! @import failed: {}", shorten_url(&import_url));
+            }
+        }
+    }
+
+    result_css
+}
+
+/// Discover and download ALL Next.js CSS chunks (not just those in link tags)
+async fn discover_nextjs_css(
+    client: &reqwest::Client,
+    html: &str,
+    base_url: &Url,
+) -> Vec<(String, String)> {
+    let mut css_chunks: Vec<(String, String)> = Vec::new();
+    let mut found_urls: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+    // Pattern 1: CSS files referenced in HTML (including preload, prefetch)
+    let link_re = Regex::new(r#"href=["']([^"']*/_next/static/css/[^"']+\.css)["']"#).unwrap();
+    for cap in link_re.captures_iter(html) {
+        let css_path = &cap[1];
+        if let Ok(full_url) = base_url.join(css_path) {
+            found_urls.insert(full_url.to_string());
+        }
+    }
+
+    // Pattern 2: CSS files in script chunks (Next.js loads CSS dynamically)
+    let chunk_re = Regex::new(r#"["']([^"']*/_next/static/css/[a-f0-9]+\.css)["']"#).unwrap();
+    for cap in chunk_re.captures_iter(html) {
+        let css_path = &cap[1];
+        if let Ok(full_url) = base_url.join(css_path) {
+            found_urls.insert(full_url.to_string());
+        }
+    }
+
+    // Pattern 3: Build manifest references
+    let manifest_re = Regex::new(r#"static/css/([a-f0-9]+\.css)"#).unwrap();
+    for cap in manifest_re.captures_iter(html) {
+        let css_file = &cap[1];
+        let css_path = format!("/_next/static/css/{}", css_file);
+        if let Ok(full_url) = base_url.join(&css_path) {
+            found_urls.insert(full_url.to_string());
+        }
+    }
+
+    // Download all discovered CSS files
+    for css_url in found_urls {
+        match client.get(&css_url).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                if let Ok(css_content) = resp.text().await {
+                    css_chunks.push((css_url, css_content));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    css_chunks
+}
+
+/// Extract CSS patterns from JavaScript bundles (CSS-in-JS at build time)
+async fn extract_css_from_js(
+    client: &reqwest::Client,
+    script_urls: &[String],
+) -> String {
+    let mut extracted_css = String::new();
+
+    // Patterns that indicate CSS content in JS
+    let css_patterns = [
+        // Styled-components / Emotion compiled CSS
+        Regex::new(r#"\.css\(["'`]([^"'`]{50,})["'`]"#).unwrap(),
+        // CSS module injections
+        Regex::new(r#"\.push\(\[module\.id,\s*["'`]([^"'`]{50,})["'`]"#).unwrap(),
+        // Style injections
+        Regex::new(r#"insertRule\(["'`]([^"'`]{30,})["'`]"#).unwrap(),
+        // CSS template literals (common in CSS-in-JS)
+        Regex::new(r#"css`([^`]{50,})`"#).unwrap(),
+        // Direct style object with CSS properties
+        Regex::new(r#"styles?:\s*["'`]([^"'`]*\{[^}]+\}[^"'`]*)["'`]"#).unwrap(),
+    ];
+
+    // Only check main/app chunks (not tiny chunks)
+    let relevant_scripts: Vec<_> = script_urls
+        .iter()
+        .filter(|url| {
+            url.contains("main") ||
+            url.contains("app") ||
+            url.contains("pages") ||
+            url.contains("layout")
+        })
+        .take(10) // Limit to avoid too many requests
+        .collect();
+
+    for script_url in relevant_scripts {
+        match client.get(script_url.as_str()).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                if let Ok(js_content) = resp.text().await {
+                    // Skip if too small to have meaningful CSS
+                    if js_content.len() < 1000 {
+                        continue;
+                    }
+
+                    for pattern in &css_patterns {
+                        for cap in pattern.captures_iter(&js_content) {
+                            let css = &cap[1];
+                            // Basic validation that it looks like CSS
+                            if css.contains('{') && css.contains('}') &&
+                               (css.contains(':') || css.contains(';')) {
+                                extracted_css.push_str(&format!("/* From JS: {} */\n", shorten_url(script_url)));
+                                extracted_css.push_str(css);
+                                extracted_css.push_str("\n\n");
+                            }
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    extracted_css
+}
+
+/// Extract CSS class definitions from Tailwind/utility class patterns in JS
+fn extract_tailwind_from_html(html: &str) -> Vec<String> {
+    let mut classes: Vec<String> = Vec::new();
+
+    // Match class="" or className="" attributes
+    let re = Regex::new(r#"class(?:Name)?=["']([^"']+)["']"#).unwrap();
+
+    for cap in re.captures_iter(html) {
+        let class_list = &cap[1];
+        for class in class_list.split_whitespace() {
+            if !classes.contains(&class.to_string()) {
+                classes.push(class.to_string());
+            }
+        }
+    }
+
+    classes
+}
+
+/// Main hybrid fetch function
+pub async fn run_hybrid(
+    url: &str,
+    output: &Path,
+    project_toml: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    println!("CrawlWe - Hybrid Fetch");
+    println!("======================");
+    println!("URL: {}", url);
+    println!("Mode: Static HTTP + CSS Discovery + JS Extraction");
+    println!();
+
+    let base_url = Url::parse(url)?;
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
+
+    // Create output structure
+    let data_dir = output.join("data");
+    let scripts_dir = output.join("scripts");
+    let assets_dir = output.join("assets");
+    let fonts_dir = assets_dir.join("fonts");
+    let images_dir = assets_dir.join("images");
+    fs::create_dir_all(&data_dir)?;
+    fs::create_dir_all(&scripts_dir)?;
+    fs::create_dir_all(&fonts_dir)?;
+    fs::create_dir_all(&images_dir)?;
+
+    // Download HTML
+    println!("1. Downloading HTML...");
+    let html_response = client.get(url).send().await?;
+    let html_raw = html_response.text().await?;
+    println!("   HTML: {} bytes", html_raw.len());
+
+    let title = extract_title(&html_raw).unwrap_or_else(|| "Untitled".to_string());
+    println!("   Title: {}", title);
+
+    // Extract all classes used in HTML (for Tailwind detection)
+    let html_classes = extract_tailwind_from_html(&html_raw);
+    println!("   Classes found: {}", html_classes.len());
+
+    // Phase 2: CSS Discovery
+    println!("\n2. CSS Discovery...");
+
+    // 2a. Standard CSS from link tags
+    let css_urls = extract_css_urls(&html_raw, &base_url);
+    println!("   Link stylesheets: {}", css_urls.len());
+
+    let mut all_css = String::new();
+    for css_url in &css_urls {
+        match client.get(css_url).send().await {
+            Ok(resp) => {
+                if let Ok(css) = resp.text().await {
+                    all_css.push_str(&format!("/* Source: {} */\n", css_url));
+                    all_css.push_str(&css);
+                    all_css.push_str("\n\n");
+                    println!("    + {}", shorten_url(css_url));
+                }
+            }
+            Err(e) => println!("    ! {} ({})", shorten_url(css_url), e),
+        }
+    }
+
+    // 2b. Inline styles
+    let inline_css = extract_inline_styles(&html_raw);
+    if !inline_css.is_empty() {
+        all_css.push_str("/* Inline styles */\n");
+        all_css.push_str(&inline_css);
+        println!("    + inline styles: {} bytes", inline_css.len());
+    }
+
+    // 2c. Resolve @import statements
+    println!("\n   Resolving @imports...");
+    all_css = resolve_css_imports(&client, &all_css, &base_url, 0).await;
+
+    // 2d. Discover additional Next.js CSS chunks
+    println!("\n   Discovering Next.js CSS chunks...");
+    let nextjs_css_chunks = discover_nextjs_css(&client, &html_raw, &base_url).await;
+    println!("   Found {} additional CSS chunks", nextjs_css_chunks.len());
+
+    for (chunk_url, chunk_css) in &nextjs_css_chunks {
+        // Avoid duplicates
+        if !all_css.contains(chunk_css) {
+            all_css.push_str(&format!("\n/* Next.js chunk: {} */\n", shorten_url(chunk_url)));
+            all_css.push_str(chunk_css);
+            all_css.push_str("\n");
+            println!("    + {}", shorten_url(chunk_url));
+        }
+    }
+
+    // Phase 3: Extract CSS from JS bundles
+    println!("\n3. Extracting CSS from JS bundles...");
+    let script_urls = extract_script_urls(&html_raw, &base_url);
+    let js_css = extract_css_from_js(&client, &script_urls).await;
+    if !js_css.is_empty() {
+        all_css.push_str("\n/* === CSS extracted from JavaScript === */\n");
+        all_css.push_str(&js_css);
+        println!("   Extracted: {} bytes from JS", js_css.len());
+    } else {
+        println!("   No CSS-in-JS patterns found");
+    }
+
+    println!("\n   Total CSS: {} bytes", all_css.len());
+
+    // Phase 4: Download assets
+    println!("\n4. Downloading assets...");
+
+    // Fonts
+    println!("   Fonts:");
+    let (css_with_local_fonts, font_map) = download_fonts(&client, &all_css, &base_url, &fonts_dir).await;
+    println!("   Downloaded {} fonts", font_map.len());
+
+    // Images from CSS
+    println!("   CSS Images:");
+    let (css_with_local_assets, css_image_map) = download_css_images(&client, &css_with_local_fonts, &base_url, &images_dir).await;
+    println!("   Downloaded {} images from CSS", css_image_map.len());
+
+    // Images from HTML
+    println!("   HTML Images:");
+    let (html_with_local_images, html_image_map) = download_html_images(&client, &html_raw, &base_url, &images_dir).await;
+    println!("   Downloaded {} images from HTML", html_image_map.len());
+
+    // Next.js images
+    println!("   Next.js Images:");
+    let (html_with_nextjs, nextjs_image_map) = download_nextjs_images(&client, &html_with_local_images, &base_url, &images_dir).await;
+    println!("   Downloaded {} Next.js images", nextjs_image_map.len());
+
+    // SVGs
+    println!("   SVGs:");
+    let (html_with_svgs, svg_map) = download_svg_images(&client, &html_with_nextjs, &base_url, &images_dir).await;
+    println!("   Downloaded {} SVG files", svg_map.len());
+
+    // Inline SVGs
+    let (html_final, inline_svg_count) = extract_inline_svgs(&html_with_svgs, &images_dir);
+    if inline_svg_count > 0 {
+        println!("   Extracted {} inline SVGs", inline_svg_count);
+    }
+
+    // Phase 5: Library detection
+    println!("\n5. Analyzing...");
+    let lib_result = LibMicroparser::parse(&script_urls, "");
+    println!("   Libraries: {}", lib_result.libraries.len());
+    for lib in &lib_result.libraries {
+        println!("    - {} ({})", lib.name, lib.category);
+    }
+
+    let css_parsed = CssMicroparser::parse(&css_with_local_assets);
+    println!("   CSS Variables: {}", css_parsed.variables.len());
+    println!("   Keyframes: {}", css_parsed.keyframes.len());
+
+    // Phase 6: Optimize and save
+    println!("\n6. Optimizing & saving...");
+
+    let html_optimized = HtmlOptimizer::optimize(&html_final, &HtmlOptimizeOptions {
+        remove_comments: true,
+        remove_scripts: true,
+        remove_styles: false,
+        remove_data_attrs: false,
+        remove_framework_attrs: true,
+        remove_empty_attrs: true,
+        minify_whitespace: false,
+        format_output: true,
+        preserve_structure: true,
+    });
+
+    let final_css = &css_with_local_assets;
+
+    println!("   HTML: {} -> {} bytes", html_raw.len(), html_optimized.stats.optimized_size);
+    println!("   CSS: {} bytes", final_css.len());
+
+    // Save files
+    let clean_html = generate_clean_html_local(&html_optimized.html, &title, final_css);
+    fs::write(output.join("index.html"), &clean_html)?;
+    println!("   + index.html");
+
+    fs::write(data_dir.join("raw.html"), &html_raw)?;
+    println!("   + data/raw.html");
+
+    fs::write(output.join("styles.css"), final_css)?;
+    println!("   + styles.css");
+
+    // Metadata
+    let total_images = css_image_map.len() + html_image_map.len() + nextjs_image_map.len() + svg_map.len();
+    let metadata = serde_json::json!({
+        "url": url,
+        "domain": base_url.host_str(),
+        "title": title,
+        "mode": "hybrid",
+        "extracted_at": chrono::Utc::now().to_rfc3339(),
+        "stats": {
+            "html_bytes": html_raw.len(),
+            "html_optimized_bytes": html_optimized.stats.optimized_size,
+            "css_bytes": final_css.len(),
+            "css_sources": css_urls.len() + nextjs_css_chunks.len(),
+            "js_css_extracted": !js_css.is_empty(),
+            "external_scripts": script_urls.len(),
+            "fonts_downloaded": font_map.len(),
+            "images_downloaded": total_images,
+            "nextjs_images": nextjs_image_map.len(),
+            "svgs_downloaded": svg_map.len(),
+            "svgs_extracted": inline_svg_count,
+            "html_classes": html_classes.len(),
+        },
+        "css_analysis": {
+            "variables": css_parsed.variables.len(),
+            "keyframes": css_parsed.keyframes.len(),
+            "colors": css_parsed.colors.len(),
+        },
+        "detected_libs": lib_result.libraries.iter().map(|l| {
+            serde_json::json!({
+                "name": l.name,
+                "category": l.category,
+                "version": l.version,
+            })
+        }).collect::<Vec<_>>(),
+    });
+    fs::write(data_dir.join("metadata.json"), serde_json::to_string_pretty(&metadata)?)?;
+    println!("   + data/metadata.json");
+
+    fs::write(scripts_dir.join("external.json"), serde_json::to_string_pretty(&script_urls)?)?;
+    println!("   + scripts/external.json");
+
+    // Save HTML classes for reference
+    fs::write(data_dir.join("classes.json"), serde_json::to_string_pretty(&html_classes)?)?;
+    println!("   + data/classes.json");
+
+    if project_toml {
+        let toml_content = generate_project_toml(url, &title, &lib_result.libraries, &css_parsed);
+        fs::write(output.join("project.toml"), &toml_content)?;
+        println!("   + project.toml");
+    }
+
+    println!("\n✓ Done! Output: {:?}", output);
+    Ok(())
+}
