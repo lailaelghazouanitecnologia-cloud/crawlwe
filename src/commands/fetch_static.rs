@@ -125,8 +125,8 @@ pub async fn run(
     // Save files
     println!("\nSaving files...");
 
-    // Clean HTML with stylesheet link
-    let clean_html = generate_clean_html(&html_optimized.html, &title);
+    // Clean HTML with stylesheet link and base href for assets
+    let clean_html = generate_clean_html(&html_optimized.html, &title, url);
     fs::write(output.join("index.html"), &clean_html)?;
     println!("  index.html");
 
@@ -240,17 +240,25 @@ fn extract_script_urls(html: &str, base_url: &Url) -> Vec<String> {
     urls
 }
 
-fn generate_clean_html(html: &str, title: &str) -> String {
+fn generate_clean_html(html: &str, title: &str, base_url: &str) -> String {
+    // Extract base URL (without path) for assets
+    let base_href = if let Ok(url) = Url::parse(base_url) {
+        format!("{}://{}", url.scheme(), url.host_str().unwrap_or(""))
+    } else {
+        base_url.to_string()
+    };
+
     let head = format!(
         r#"<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <base href="{}/">
     <title>{}</title>
     <link rel="stylesheet" href="styles.css">
 </head>"#,
-        title
+        base_href, title
     );
 
     if let Some(body_start) = html.find("<body") {
