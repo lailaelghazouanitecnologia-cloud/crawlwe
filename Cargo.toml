@@ -7,7 +7,7 @@ license = "MIT"
 
 [lib]
 name = "crawlwe_core"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
 path = "src/lib.rs"
 
 [[bin]]
@@ -15,9 +15,6 @@ name = "crawlwe"
 path = "src/main.rs"
 
 [dependencies]
-# Python bindings
-pyo3 = { version = "0.20", features = ["extension-module"] }
-
 # Async
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
@@ -28,7 +25,6 @@ chromiumoxide = { version = "0.7", default-features = false, features = ["tokio-
 # HTML/CSS Parsing
 html5ever = "0.27"
 markup5ever_rcdom = "0.3"
-# lightningcss = { version = "1.0.0-alpha.70" }  # Optional CSS parser
 
 # Regex
 regex = "1"

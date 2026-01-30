@@ -3,12 +3,10 @@
 //! These structures represent the captured state of a web page,
 //! including all CSS states, computed styles, and DOM structure.
 
-use pyo3::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Represents a CSS pseudo-state
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum CssState {
     Base,
@@ -29,9 +27,8 @@ pub enum CssState {
     Selection,
 }
 
-#[pymethods]
 impl CssState {
-    fn __str__(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         match self {
             CssState::Base => "base",
             CssState::Hover => "hover",
@@ -54,63 +51,40 @@ impl CssState {
 }
 
 /// Box model dimensions for an element
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct BoxModel {
-    #[pyo3(get, set)]
     pub x: f64,
-    #[pyo3(get, set)]
     pub y: f64,
-    #[pyo3(get, set)]
     pub width: f64,
-    #[pyo3(get, set)]
     pub height: f64,
-    #[pyo3(get, set)]
     pub margin_top: f64,
-    #[pyo3(get, set)]
     pub margin_right: f64,
-    #[pyo3(get, set)]
     pub margin_bottom: f64,
-    #[pyo3(get, set)]
     pub margin_left: f64,
-    #[pyo3(get, set)]
     pub padding_top: f64,
-    #[pyo3(get, set)]
     pub padding_right: f64,
-    #[pyo3(get, set)]
     pub padding_bottom: f64,
-    #[pyo3(get, set)]
     pub padding_left: f64,
-    #[pyo3(get, set)]
     pub border_top: f64,
-    #[pyo3(get, set)]
     pub border_right: f64,
-    #[pyo3(get, set)]
     pub border_bottom: f64,
-    #[pyo3(get, set)]
     pub border_left: f64,
 }
 
-#[pymethods]
 impl BoxModel {
-    #[new]
     pub fn new() -> Self {
         Self::default()
     }
 }
 
 /// Computed CSS styles for an element in a specific state
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ComputedStyles {
     /// All CSS properties and their computed values
-    #[pyo3(get, set)]
     pub properties: HashMap<String, String>,
 }
 
-#[pymethods]
 impl ComputedStyles {
-    #[new]
     pub fn new() -> Self {
         Self::default()
     }
@@ -140,30 +114,22 @@ impl ComputedStyles {
 /// a = ID selectors
 /// b = class selectors, attributes, pseudo-classes
 /// c = type selectors, pseudo-elements
-#[pyclass]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, Default, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Specificity {
-    #[pyo3(get, set)]
     pub ids: u32,
-    #[pyo3(get, set)]
     pub classes: u32,
-    #[pyo3(get, set)]
     pub elements: u32,
 }
 
-#[pymethods]
 impl Specificity {
-    #[new]
     pub fn new(ids: u32, classes: u32, elements: u32) -> Self {
         Self { ids, classes, elements }
     }
+}
 
-    fn __str__(&self) -> String {
-        format!("({}, {}, {})", self.ids, self.classes, self.elements)
-    }
-
-    fn __repr__(&self) -> String {
-        format!("Specificity({}, {}, {})", self.ids, self.classes, self.elements)
+impl std::fmt::Display for Specificity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "({}, {}, {})", self.ids, self.classes, self.elements)
     }
 }
 
@@ -183,24 +149,16 @@ pub enum StyleSource {
 }
 
 /// A CSS rule with its origin and specificity
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CssRule {
-    #[pyo3(get, set)]
     pub selector: String,
-    #[pyo3(get, set)]
     pub declarations: HashMap<String, String>,
-    #[pyo3(get)]
     pub specificity: Specificity,
-    #[pyo3(get, set)]
     pub source_file: Option<String>,
-    #[pyo3(get, set)]
     pub line: Option<usize>,
 }
 
-#[pymethods]
 impl CssRule {
-    #[new]
     pub fn new(selector: String) -> Self {
         Self {
             selector,
@@ -226,59 +184,35 @@ impl CssRule {
 }
 
 /// A captured DOM element with all its states
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CapturedElement {
     /// Unique identifier for this element
-    #[pyo3(get, set)]
     pub id: String,
-
     /// HTML tag name (lowercase)
-    #[pyo3(get, set)]
     pub tag: String,
-
     /// Element's ID attribute if present
-    #[pyo3(get, set)]
     pub element_id: Option<String>,
-
     /// CSS classes
-    #[pyo3(get, set)]
     pub classes: Vec<String>,
-
     /// Other attributes (excluding id, class, style)
-    #[pyo3(get, set)]
     pub attributes: HashMap<String, String>,
-
     /// Text content (direct text, not from children)
-    #[pyo3(get, set)]
     pub text_content: Option<String>,
-
     /// Computed styles for each CSS state
     pub styles_by_state: HashMap<String, ComputedStyles>,
-
     /// Box model dimensions
-    #[pyo3(get)]
     pub box_model: BoxModel,
-
     /// Parent element ID
-    #[pyo3(get, set)]
     pub parent_id: Option<String>,
-
     /// Children element IDs (ordered)
-    #[pyo3(get, set)]
     pub children_ids: Vec<String>,
-
     /// CSS rules that match this element
     pub matched_rules: Vec<CssRule>,
-
     /// Depth in DOM tree (0 = root)
-    #[pyo3(get, set)]
     pub depth: usize,
 }
 
-#[pymethods]
 impl CapturedElement {
-    #[new]
     pub fn new(id: String, tag: String) -> Self {
         Self {
             id,
@@ -318,93 +252,62 @@ impl CapturedElement {
 }
 
 /// CSS animation keyframes
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Keyframes {
-    #[pyo3(get, set)]
     pub name: String,
-    #[pyo3(get, set)]
     pub frames: Vec<KeyframeStep>,
 }
 
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct KeyframeStep {
-    #[pyo3(get, set)]
     pub position: String, // "0%", "50%", "100%", "from", "to"
-    #[pyo3(get, set)]
     pub properties: HashMap<String, String>,
 }
 
 /// CSS transition definition
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transition {
-    #[pyo3(get, set)]
     pub property: String,
-    #[pyo3(get, set)]
     pub duration: String,
-    #[pyo3(get, set)]
     pub timing_function: String,
-    #[pyo3(get, set)]
     pub delay: String,
 }
 
 /// Media query with its rules
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MediaQuery {
-    #[pyo3(get, set)]
     pub condition: String,
-    #[pyo3(get, set)]
     pub rules: Vec<CssRule>,
 }
 
 /// CSS custom property (variable)
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CssVariable {
-    #[pyo3(get, set)]
     pub name: String,
-    #[pyo3(get, set)]
     pub value: String,
-    #[pyo3(get, set)]
     pub scope: String, // ":root" or selector
 }
 
 /// Font face definition
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FontFace {
-    #[pyo3(get, set)]
     pub family: String,
-    #[pyo3(get, set)]
     pub src: Vec<String>,
-    #[pyo3(get, set)]
     pub weight: Option<String>,
-    #[pyo3(get, set)]
     pub style: Option<String>,
-    #[pyo3(get, set)]
     pub display: Option<String>,
 }
 
 /// Viewport configuration
-#[pyclass]
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Viewport {
-    #[pyo3(get, set)]
     pub width: u32,
-    #[pyo3(get, set)]
     pub height: u32,
-    #[pyo3(get, set)]
     pub device_scale_factor: f64,
-    #[pyo3(get, set)]
     pub is_mobile: bool,
 }
 
-#[pymethods]
 impl Viewport {
-    #[new]
     pub fn new(width: u32, height: u32) -> Self {
         Self {
             width,
@@ -414,80 +317,53 @@ impl Viewport {
         }
     }
 
-    #[staticmethod]
     pub fn mobile() -> Self {
         Self::new(375, 812)
     }
 
-    #[staticmethod]
     pub fn tablet() -> Self {
         Self::new(768, 1024)
     }
 
-    #[staticmethod]
     pub fn desktop() -> Self {
         Self::new(1440, 900)
     }
 }
 
 /// Complete captured page with all data
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CapturedPage {
     /// Source URL
-    #[pyo3(get, set)]
     pub url: String,
-
     /// Page title
-    #[pyo3(get, set)]
     pub title: Option<String>,
-
     /// Viewport used for capture
-    #[pyo3(get)]
     pub viewport: Viewport,
-
     /// All captured elements (keyed by ID)
     pub elements: HashMap<String, CapturedElement>,
-
     /// Root element ID
-    #[pyo3(get, set)]
     pub root_id: Option<String>,
-
     /// All CSS rules (deduplicated)
     pub css_rules: Vec<CssRule>,
-
     /// Media queries
     pub media_queries: Vec<MediaQuery>,
-
     /// Keyframe animations
     pub keyframes: Vec<Keyframes>,
-
     /// CSS variables
     pub css_variables: Vec<CssVariable>,
-
     /// Font faces
     pub font_faces: Vec<FontFace>,
-
     /// Raw HTML (cleaned)
-    #[pyo3(get, set)]
     pub html: String,
-
     /// Generated unified CSS
-    #[pyo3(get, set)]
     pub css: String,
-
     /// Screenshot (base64 PNG)
-    #[pyo3(get, set)]
     pub screenshot: Option<String>,
-
     /// Capture timestamp
-    #[pyo3(get, set)]
     pub timestamp: String,
 }
 
-#[pymethods]
 impl CapturedPage {
-    #[new]
     pub fn new(url: String, viewport: Viewport) -> Self {
         Self {
             url,
@@ -521,67 +397,41 @@ impl CapturedPage {
 }
 
 fn chrono_now() -> String {
-    // Simple timestamp without chrono dependency
-    "2026-01-27T00:00:00Z".to_string()
+    chrono::Utc::now().to_rfc3339()
 }
 
 /// Configuration for capture process
-#[pyclass]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CaptureConfig {
     /// Viewports to capture
-    #[pyo3(get, set)]
     pub viewports: Vec<Viewport>,
-
     /// Whether to capture hover states
-    #[pyo3(get, set)]
     pub capture_hover: bool,
-
     /// Whether to capture focus states
-    #[pyo3(get, set)]
     pub capture_focus: bool,
-
     /// Whether to capture active states
-    #[pyo3(get, set)]
     pub capture_active: bool,
-
     /// Whether to capture pseudo-elements
-    #[pyo3(get, set)]
     pub capture_pseudo_elements: bool,
-
     /// Whether to take screenshots
-    #[pyo3(get, set)]
     pub take_screenshots: bool,
-
     /// Whether to download fonts
-    #[pyo3(get, set)]
     pub download_fonts: bool,
-
     /// Whether to download images
-    #[pyo3(get, set)]
     pub download_images: bool,
-
     /// Maximum elements to process (0 = unlimited)
-    #[pyo3(get, set)]
     pub max_elements: usize,
-
     /// Timeout in milliseconds
-    #[pyo3(get, set)]
     pub timeout_ms: u64,
-
     /// User agent string
-    #[pyo3(get, set)]
     pub user_agent: Option<String>,
 }
 
-#[pymethods]
 impl CaptureConfig {
-    #[new]
     pub fn new() -> Self {
         Self::default()
     }
 
-    #[staticmethod]
     pub fn full() -> Self {
         Self {
             viewports: vec![
@@ -602,7 +452,6 @@ impl CaptureConfig {
         }
     }
 
-    #[staticmethod]
     pub fn fast() -> Self {
         Self {
             viewports: vec![Viewport::desktop()],
