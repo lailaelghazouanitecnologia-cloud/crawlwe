@@ -13,6 +13,7 @@ use crawlwe_core::pipeline::{CssMicroparser, LibMicroparser, HtmlOptimizer, Html
 use crawlwe_core::export::LibraryCDN;
 use crawlwe_core::js::{JsAnalyzer, LibraryRegistry, JsToCssConverter};
 use crawlwe_core::css::{CssAssetExtractor, CssAssetExtractionResult, ImageContext};
+use crawlwe_core::assets::{AssetRegistry, SvgAsset, SvgCategory, CssStats, ImageContext as AssetImageContext};
 
 pub async fn run(
     url: &str,
@@ -1197,10 +1198,20 @@ pub async fn run_hybrid(
     let assets_dir = output.join("assets");
     let fonts_dir = assets_dir.join("fonts");
     let images_dir = assets_dir.join("images");
+    let svgs_dir = assets_dir.join("svgs");
+    let icons_dir = svgs_dir.join("icons");
+    let logos_dir = svgs_dir.join("logos");
+    let illustrations_dir = svgs_dir.join("illustrations");
     fs::create_dir_all(&data_dir)?;
     fs::create_dir_all(&scripts_dir)?;
     fs::create_dir_all(&fonts_dir)?;
     fs::create_dir_all(&images_dir)?;
+    fs::create_dir_all(&icons_dir)?;
+    fs::create_dir_all(&logos_dir)?;
+    fs::create_dir_all(&illustrations_dir)?;
+
+    // Initialize Asset Registry
+    let mut asset_registry = AssetRegistry::new();
 
     // Download HTML
     println!("1. Downloading HTML...");
@@ -1299,15 +1310,26 @@ pub async fn run_hybrid(
     let (html_with_nextjs, nextjs_image_map) = download_nextjs_images(&client, &html_with_local_images, &base_url, &images_dir).await;
     println!("   Downloaded {} Next.js images", nextjs_image_map.len());
 
-    // SVGs
-    println!("   SVGs:");
+    // SVGs - external files
+    println!("   SVGs (external):");
     let (html_with_svgs, svg_map) = download_svg_images(&client, &html_with_nextjs, &base_url, &images_dir).await;
     println!("   Downloaded {} SVG files", svg_map.len());
 
-    // Inline SVGs
-    let (html_final, inline_svg_count) = extract_inline_svgs(&html_with_svgs, &images_dir);
-    if inline_svg_count > 0 {
-        println!("   Extracted {} inline SVGs", inline_svg_count);
+    // SVGs - comprehensive extraction with registry
+    println!("\n   SVG Registry Analysis:");
+    asset_registry.extract_svgs(&html_with_svgs);
+    println!("     Total SVGs found: {}", asset_registry.stats.total_svgs_found);
+    println!("     Unique SVGs: {}", asset_registry.stats.unique_svgs);
+    println!("     Duplicates removed: {}", asset_registry.stats.duplicate_svgs);
+    println!("     Icons: {}", asset_registry.stats.icons_found);
+    println!("     Logos: {}", asset_registry.stats.logos_found);
+    println!("     Illustrations: {}", asset_registry.stats.illustrations_found);
+
+    // Extract SVGs to categorized directories
+    let html_final = extract_svgs_with_registry(&mut asset_registry, &html_with_svgs, &svgs_dir)?;
+    let extractable_count = asset_registry.get_extractable_svgs().len();
+    if extractable_count > 0 {
+        println!("     Extracted {} SVGs to files", extractable_count);
     }
 
     // Phase 5: Library detection
@@ -1353,8 +1375,27 @@ pub async fn run_hybrid(
     fs::write(output.join("styles.css"), final_css)?;
     println!("   + styles.css");
 
+    // Register fonts and images in the asset registry
+    for (url, font_info) in &extraction_result.fonts {
+        if !url.starts_with("local:") {
+            asset_registry.register_font(
+                font_info.font_family.as_deref().unwrap_or("Unknown"),
+                font_info.font_weight.as_deref(),
+                font_info.font_style.as_deref(),
+                url,
+                font_info.local_path.as_deref(),
+                None,
+            );
+        }
+    }
+
+    for (url, _) in &html_image_map {
+        asset_registry.register_image(url, None, AssetImageContext::Content, None);
+    }
+
     // Metadata (including comprehensive extraction details)
     let total_images = css_image_map.len() + html_image_map.len() + nextjs_image_map.len() + svg_map.len();
+    let extractable_svgs = asset_registry.get_extractable_svgs().len();
     let metadata = serde_json::json!({
         "url": url,
         "domain": base_url.host_str(),
@@ -1372,8 +1413,18 @@ pub async fn run_hybrid(
             "images_downloaded": total_images,
             "nextjs_images": nextjs_image_map.len(),
             "svgs_downloaded": svg_map.len(),
-            "svgs_extracted": inline_svg_count,
+            "svgs_extracted": extractable_svgs,
             "html_classes": html_classes.len(),
+        },
+        "asset_registry": {
+            "total_svgs": asset_registry.stats.total_svgs_found,
+            "unique_svgs": asset_registry.stats.unique_svgs,
+            "duplicate_svgs": asset_registry.stats.duplicate_svgs,
+            "icons": asset_registry.stats.icons_found,
+            "logos": asset_registry.stats.logos_found,
+            "illustrations": asset_registry.stats.illustrations_found,
+            "fonts": asset_registry.stats.fonts_found,
+            "images": asset_registry.stats.images_found,
         },
         "asset_extraction": {
             "total_urls_found": extraction_result.stats.total_urls_found,
@@ -1409,9 +1460,19 @@ pub async fn run_hybrid(
     println!("   + data/classes.json");
 
     if project_toml {
-        let toml_content = generate_project_toml(url, &title, &lib_result.libraries, &css_parsed);
+        // Generate TOML with full asset registry
+        let libraries: Vec<(String, String)> = lib_result.libraries
+            .iter()
+            .map(|l| (l.name.clone(), l.category.clone()))
+            .collect();
+        let css_stats = CssStats {
+            variables: css_parsed.variables.len(),
+            keyframes: css_parsed.keyframes.len(),
+            colors: css_parsed.colors.len(),
+        };
+        let toml_content = asset_registry.generate_toml(url, &title, "hybrid", &libraries, &css_stats);
         fs::write(output.join("project.toml"), &toml_content)?;
-        println!("   + project.toml");
+        println!("   + project.toml (with asset registry)");
     }
 
     // Phase 6b: Analyze JS with library parsers (NEW!)
@@ -1561,4 +1622,78 @@ async fn analyze_js_with_library_parsers(
     }
 
     generated_css
+}
+
+/// Extract SVGs using the asset registry with deduplication and categorization
+fn extract_svgs_with_registry(
+    registry: &mut AssetRegistry,
+    html: &str,
+    svgs_dir: &Path,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let mut result_html = html.to_string();
+
+    // Get SVGs that should be extracted
+    let extractable = registry.get_extractable_svgs();
+
+    if extractable.is_empty() {
+        return Ok(result_html);
+    }
+
+    // Create category directories
+    let icons_dir = svgs_dir.join("icons");
+    let logos_dir = svgs_dir.join("logos");
+    let illustrations_dir = svgs_dir.join("illustrations");
+
+    fs::create_dir_all(&icons_dir)?;
+    fs::create_dir_all(&logos_dir)?;
+    fs::create_dir_all(&illustrations_dir)?;
+
+    // Collect SVG IDs to extract
+    let svg_ids: Vec<String> = extractable.iter().map(|s| s.id.clone()).collect();
+
+    for svg_id in svg_ids {
+        // Get mutable reference to update local_path
+        if let Some(svg) = registry.svgs.get_mut(&svg_id) {
+            // Determine output directory based on category
+            let (category_dir, category_name) = match svg.category {
+                SvgCategory::Icon => (&icons_dir, "icons"),
+                SvgCategory::Logo => (&logos_dir, "logos"),
+                SvgCategory::Illustration => (&illustrations_dir, "illustrations"),
+                _ => (&icons_dir, "icons"), // Default to icons
+            };
+
+            // Write SVG file
+            let file_path = category_dir.join(&svg.filename);
+
+            // Add XML declaration if not present
+            let svg_content = if svg.content.starts_with("<?xml") {
+                svg.content.clone()
+            } else {
+                format!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{}", svg.content)
+            };
+
+            if fs::write(&file_path, &svg_content).is_ok() {
+                let relative_path = format!("assets/svgs/{}/{}", category_name, svg.filename);
+                svg.local_path = Some(relative_path.clone());
+
+                // Replace inline SVG with <img> tag in HTML
+                let classes_str = if svg.classes.is_empty() {
+                    format!("svg-{}", svg.category.as_str())
+                } else {
+                    svg.classes.join(" ")
+                };
+
+                let img_tag = format!(
+                    r#"<img src="{}" alt="{}" class="{}">"#,
+                    relative_path,
+                    svg.category.as_str(),
+                    classes_str
+                );
+
+                result_html = result_html.replacen(&svg.content, &img_tag, 1);
+            }
+        }
+    }
+
+    Ok(result_html)
 }

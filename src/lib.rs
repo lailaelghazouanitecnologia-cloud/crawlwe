@@ -20,6 +20,7 @@ pub mod vm;
 pub mod pipeline;
 pub mod js;
 pub mod css;
+pub mod assets;
 
 pub mod parser {
     pub mod css;
