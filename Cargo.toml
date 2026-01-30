@@ -17,13 +17,12 @@ path = "src/main.rs"
 [dependencies]
 # Async
 tokio = { version = "1", features = ["full"] }
-futures = "0.3"
 
 # HTTP client
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { version = "0.12", features = ["blocking", "json"] }
 
-# Chrome DevTools Protocol
-chromiumoxide = { version = "0.7", default-features = false, features = ["tokio-runtime"] }
+# Headless Chrome
+headless_chrome = "1"
 
 # HTML/CSS Parsing
 html5ever = "0.27"

@@ -157,8 +157,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             } else {
                 commands::fetch::run(
                     &url, &output, wait, width, height, screenshot, detect_libs, project_toml,
-                )
-                .await?;
+                )?;
             }
         }
 
@@ -168,7 +167,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             wait,
             parallel,
         } => {
-            commands::batch::run(&file, &output, wait, parallel).await?;
+            commands::batch::run(&file, &output, wait, parallel)?;
         }
 
         Commands::Analyze { path, format } => {

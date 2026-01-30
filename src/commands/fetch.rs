@@ -1,9 +1,6 @@
-//! Fetch command - Capture a single web page
+//! Fetch command - Capture a web page using headless Chrome
 
-use chromiumoxide::browser::{Browser, BrowserConfig};
-use chromiumoxide::cdp::browser_protocol::page::CaptureScreenshotFormat;
-use chromiumoxide::Page;
-use futures::StreamExt;
+use headless_chrome::{Browser, LaunchOptions};
 use std::fs;
 use std::path::Path;
 use std::time::Duration;
@@ -12,11 +9,11 @@ use url::Url;
 use crawlwe_core::pipeline::{
     CssMicroparser, LibMicroparser, CssParseResult,
     CssOptimizer, HtmlOptimizer, CssOptimizeOptions, HtmlOptimizeOptions,
-    DetectedLibrary, LibrarySource,
+    DetectedLibrary,
 };
 use crawlwe_core::export::LibraryCDN;
 
-pub async fn run(
+pub fn run(
     url: &str,
     output: &Path,
     wait: u64,
@@ -31,74 +28,61 @@ pub async fn run(
     println!("URL: {}", url);
     println!();
 
-    // Create output structure
+    // Create output directories
     let data_dir = output.join("data");
     let scripts_dir = output.join("scripts");
-
     fs::create_dir_all(&data_dir)?;
     fs::create_dir_all(&scripts_dir)?;
 
     // Launch browser
     println!("Launching browser...");
-    let (mut browser, mut handler) = Browser::launch(
-        BrowserConfig::builder()
-            .window_size(width, height)
-            .arg("--no-sandbox")
-            .arg("--disable-setuid-sandbox")
-            .arg("--disable-dev-shm-usage")
-            .arg("--disable-gpu")
-            .arg("--disable-blink-features=AutomationControlled")
+    let browser = Browser::new(
+        LaunchOptions::default_builder()
+            .headless(true)
+            .window_size(Some((width, height)))
+            .sandbox(false)
             .build()
-            .map_err(|e| format!("Failed to build browser config: {}", e))?,
-    )
-    .await?;
+            .map_err(|e| format!("Failed to build launch options: {}", e))?,
+    )?;
 
-    let handle = tokio::spawn(async move {
-        while let Some(_) = handler.next().await {}
-    });
-
-    // Create new page
+    // Create tab and navigate
     println!("Opening page...");
-    let page = browser.new_page(url).await?;
+    let tab = browser.new_tab()?;
+    tab.set_default_timeout(Duration::from_secs(60));
+    tab.navigate_to(url)?;
+    tab.wait_until_navigated()?;
 
-    // Wait for page to load
+    // Wait for JS
     println!("Waiting {}s for JavaScript...", wait);
-    tokio::time::sleep(Duration::from_secs(wait)).await;
+    std::thread::sleep(Duration::from_secs(wait));
 
-    // Wait for stylesheets to load
-    println!("Waiting for stylesheets...");
-    wait_for_stylesheets(&page).await?;
+    // Wait for network idle
+    println!("Waiting for network...");
+    let _ = tab.wait_for_element("body");
 
-    // Scroll to load lazy content
+    // Scroll for lazy content
     println!("Scrolling for lazy content...");
-    scroll_page(&page).await?;
-    tokio::time::sleep(Duration::from_secs(2)).await;
+    scroll_page(&tab)?;
+    std::thread::sleep(Duration::from_secs(1));
 
-    // Wait for any animations/transitions triggered by scroll
-    wait_for_idle(&page).await?;
-
-    // Extract all data
+    // Extract content
     println!("\nExtracting content...");
 
     // Get rendered HTML
-    let html_raw = get_rendered_html(&page).await?;
+    let html_raw = tab.get_content()?;
     println!("  HTML: {} bytes", html_raw.len());
 
     // Get all CSS
-    let css_raw = get_all_css(&page).await?;
+    let css_raw = get_all_css(&tab)?;
     println!("  CSS: {} bytes", css_raw.len());
 
-    // Get inline JS for analysis
-    let js_inline = get_inline_js(&page).await?;
-
-    // Get external resources
-    let external_scripts = get_external_scripts(&page).await?;
-    let external_styles = get_external_styles(&page).await?;
+    // Get scripts for library detection
+    let external_scripts = get_external_scripts(&tab)?;
+    let js_inline = get_inline_js(&tab)?;
     println!("  External scripts: {}", external_scripts.len());
-    println!("  External styles: {}", external_styles.len());
 
-    // Get page title
-    let title = get_title(&page).await.unwrap_or_else(|_| "Untitled".to_string());
+    // Get title
+    let title = get_title(&tab).unwrap_or_else(|_| "Untitled".to_string());
     println!("  Title: {}", title);
 
     // Detect libraries
@@ -112,27 +96,25 @@ pub async fn run(
         }
     }
 
-    // Parse CSS for analysis
+    // Parse CSS
     let css_parsed = CssMicroparser::parse(&css_raw);
     println!("  CSS variables: {}", css_parsed.variables.len());
     println!("  CSS keyframes: {}", css_parsed.keyframes.len());
 
-    // Take screenshot
+    // Screenshot
     if screenshot {
         println!("\nTaking screenshot...");
-        let screenshot_data = page
-            .screenshot(
-                chromiumoxide::cdp::browser_protocol::page::CaptureScreenshotParams::builder()
-                    .format(CaptureScreenshotFormat::Png)
-                    .capture_beyond_viewport(true)
-                    .build(),
-            )
-            .await?;
-        fs::write(output.join("screenshot.png"), &screenshot_data)?;
+        let png = tab.capture_screenshot(
+            headless_chrome::protocol::cdp::Page::CaptureScreenshotFormatOption::Png,
+            None,
+            None,
+            true,
+        )?;
+        fs::write(output.join("screenshot.png"), &png)?;
         println!("  screenshot.png saved");
     }
 
-    // Optimize content
+    // Optimize
     println!("\nOptimizing...");
 
     let html_optimized = HtmlOptimizer::optimize(&html_raw, &HtmlOptimizeOptions {
@@ -154,20 +136,20 @@ pub async fn run(
     // Save files
     println!("\nSaving files...");
 
-    // Save clean HTML
+    // Clean HTML
     let clean_html = generate_clean_html(&html_optimized.html, &title);
     fs::write(output.join("index.html"), &clean_html)?;
     println!("  index.html");
 
-    // Save raw HTML
+    // Raw HTML
     fs::write(data_dir.join("raw.html"), &html_raw)?;
     println!("  data/raw.html");
 
-    // Save CSS
+    // CSS
     fs::write(output.join("styles.css"), &css_optimized.css)?;
     println!("  styles.css");
 
-    // Save metadata
+    // Metadata
     let base_url = Url::parse(url)?;
     let metadata = serde_json::json!({
         "url": url,
@@ -179,9 +161,7 @@ pub async fn run(
             "html_optimized_bytes": html_optimized.stats.optimized_size,
             "css_bytes": css_raw.len(),
             "css_optimized_bytes": css_optimized.stats.optimized_size,
-            "scripts_removed": html_optimized.stats.scripts_removed,
             "external_scripts": external_scripts.len(),
-            "external_styles": external_styles.len(),
         },
         "css_analysis": {
             "variables": css_parsed.variables.len(),
@@ -196,232 +176,134 @@ pub async fn run(
                 "version": l.version,
             })
         }).collect::<Vec<_>>(),
-        "viewport": {
-            "width": width,
-            "height": height
-        }
     });
     fs::write(data_dir.join("metadata.json"), serde_json::to_string_pretty(&metadata)?)?;
     println!("  data/metadata.json");
 
-    // Generate project.toml
+    // Project TOML
     if project_toml {
         let toml_content = generate_project_toml(url, &title, &detected_libs, &css_parsed);
         fs::write(output.join("project.toml"), &toml_content)?;
         println!("  project.toml");
     }
 
-    // Save scripts info
+    // Scripts info
     fs::write(
         scripts_dir.join("external.json"),
         serde_json::to_string_pretty(&external_scripts)?,
     )?;
     println!("  scripts/external.json");
 
-    // Close browser
-    browser.close().await?;
-    handle.abort();
-
     println!("\nDone! Output: {:?}", output);
-
     Ok(())
 }
 
-async fn wait_for_stylesheets(page: &Page) -> Result<(), Box<dyn std::error::Error>> {
-    page.evaluate(
+fn scroll_page(tab: &headless_chrome::Tab) -> Result<(), Box<dyn std::error::Error>> {
+    tab.evaluate(
         r#"
-        (async () => {
-            // Wait for all link[rel=stylesheet] to load
-            const links = document.querySelectorAll('link[rel="stylesheet"]');
-            const promises = Array.from(links).map(link => {
-                if (link.sheet) return Promise.resolve();
-                return new Promise((resolve) => {
-                    link.addEventListener('load', resolve);
-                    link.addEventListener('error', resolve);
-                    // Timeout after 5s per stylesheet
-                    setTimeout(resolve, 5000);
-                });
-            });
-            await Promise.all(promises);
-
-            // Wait for fonts to load
-            if (document.fonts && document.fonts.ready) {
-                await document.fonts.ready;
-            }
-        })()
-        "#,
-    )
-    .await?;
-    Ok(())
-}
-
-async fn wait_for_idle(page: &Page) -> Result<(), Box<dyn std::error::Error>> {
-    page.evaluate(
-        r#"
-        new Promise(resolve => {
-            // Use requestIdleCallback if available, otherwise setTimeout
-            if (window.requestIdleCallback) {
-                requestIdleCallback(() => resolve(), { timeout: 2000 });
-            } else {
-                setTimeout(resolve, 500);
-            }
-        })
-        "#,
-    )
-    .await?;
-    Ok(())
-}
-
-async fn scroll_page(page: &Page) -> Result<(), Box<dyn std::error::Error>> {
-    page.evaluate(
-        r#"
-        (async () => {
-            const delay = ms => new Promise(r => setTimeout(r, ms));
+        (function() {
             const height = document.body.scrollHeight;
             const step = window.innerHeight;
             for (let y = 0; y < height; y += step) {
                 window.scrollTo(0, y);
-                await delay(200);
             }
             window.scrollTo(0, 0);
         })()
         "#,
-    )
-    .await?;
+        false,
+    )?;
     Ok(())
 }
 
-async fn get_rendered_html(page: &Page) -> Result<String, Box<dyn std::error::Error>> {
-    let html: String = page
-        .evaluate("document.documentElement.outerHTML")
-        .await?
-        .into_value()?;
-    Ok(html)
-}
+fn get_all_css(tab: &headless_chrome::Tab) -> Result<String, Box<dyn std::error::Error>> {
+    let result = tab.evaluate(
+        r#"
+        (function() {
+            let css = '';
 
-async fn get_all_css(page: &Page) -> Result<String, Box<dyn std::error::Error>> {
-    let css: String = page
-        .evaluate(
-            r#"
-            (async function() {
-                let css = '';
-                const fetchedUrls = new Set();
-
-                // 1. Get CSS from all stylesheets (inline and accessible external)
-                for (const sheet of document.styleSheets) {
-                    try {
-                        if (sheet.cssRules) {
-                            const source = sheet.href || 'inline';
-                            css += `/* Source: ${source} */\n`;
-                            for (const rule of sheet.cssRules) {
-                                css += rule.cssText + '\n';
-                            }
-                            css += '\n';
-                            if (sheet.href) fetchedUrls.add(sheet.href);
+            // Get from stylesheets
+            for (const sheet of document.styleSheets) {
+                try {
+                    if (sheet.cssRules) {
+                        const src = sheet.href || 'inline';
+                        css += '/* Source: ' + src + ' */\n';
+                        for (const rule of sheet.cssRules) {
+                            css += rule.cssText + '\n';
                         }
-                    } catch (e) {
-                        // CORS-protected stylesheet - fetch it directly
-                        if (sheet.href && !fetchedUrls.has(sheet.href)) {
-                            try {
-                                const resp = await fetch(sheet.href);
-                                if (resp.ok) {
-                                    const text = await resp.text();
-                                    css += `/* Source: ${sheet.href} */\n`;
-                                    css += text + '\n\n';
-                                    fetchedUrls.add(sheet.href);
-                                }
-                            } catch (fetchErr) {
-                                css += `/* Could not fetch: ${sheet.href} */\n`;
-                            }
-                        }
+                        css += '\n';
+                    }
+                } catch (e) {
+                    if (sheet.href) {
+                        css += '/* CORS: ' + sheet.href + ' */\n';
                     }
                 }
+            }
 
-                // 2. Get all inline <style> tags content (for CSS-in-JS)
-                const styleTags = document.querySelectorAll('style');
-                for (const style of styleTags) {
-                    if (style.textContent && style.textContent.trim()) {
-                        css += '/* Inline <style> tag */\n';
-                        css += style.textContent + '\n\n';
-                    }
+            // Get inline styles
+            for (const style of document.querySelectorAll('style')) {
+                if (style.textContent && style.textContent.trim()) {
+                    css += '/* Inline style */\n' + style.textContent + '\n\n';
                 }
+            }
 
-                // 3. Collect CSS custom properties from :root
-                const root = document.documentElement;
-                const rootStyles = getComputedStyle(root);
-                let rootVars = ':root {\n';
-                let hasVars = false;
-                for (let i = 0; i < rootStyles.length; i++) {
-                    const prop = rootStyles[i];
-                    if (prop.startsWith('--')) {
-                        rootVars += `  ${prop}: ${rootStyles.getPropertyValue(prop)};\n`;
-                        hasVars = true;
-                    }
+            // Get CSS variables
+            const root = getComputedStyle(document.documentElement);
+            let vars = ':root {\n';
+            let hasVars = false;
+            for (let i = 0; i < root.length; i++) {
+                if (root[i].startsWith('--')) {
+                    vars += '  ' + root[i] + ': ' + root.getPropertyValue(root[i]) + ';\n';
+                    hasVars = true;
                 }
-                rootVars += '}\n\n';
-                if (hasVars) {
-                    css += '/* Computed CSS Variables from :root */\n' + rootVars;
-                }
+            }
+            vars += '}\n';
+            if (hasVars) css += '/* CSS Variables */\n' + vars;
 
-                return css;
-            })()
-            "#,
-        )
-        .await?
-        .into_value()?;
-    Ok(css)
+            return css;
+        })()
+        "#,
+        false,
+    )?;
+
+    Ok(result.value.unwrap_or_default().as_str().unwrap_or("").to_string())
 }
 
-async fn get_inline_js(page: &Page) -> Result<String, Box<dyn std::error::Error>> {
-    let js: String = page
-        .evaluate(
-            r#"
-            Array.from(document.scripts)
-                .filter(s => !s.src && s.textContent)
-                .map(s => s.textContent)
-                .join('\n\n')
-            "#,
-        )
-        .await?
-        .into_value()?;
-    Ok(js)
-}
+fn get_external_scripts(tab: &headless_chrome::Tab) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    let result = tab.evaluate(
+        r#"
+        Array.from(document.scripts)
+            .filter(s => s.src)
+            .map(s => s.src)
+        "#,
+        false,
+    )?;
 
-async fn get_external_scripts(page: &Page) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    let scripts: Vec<String> = page
-        .evaluate(
-            r#"
-            Array.from(document.scripts)
-                .filter(s => s.src)
-                .map(s => s.src)
-            "#,
-        )
-        .await?
-        .into_value()?;
+    let scripts: Vec<String> = result.value
+        .and_then(|v| serde_json::from_value(v).ok())
+        .unwrap_or_default();
     Ok(scripts)
 }
 
-async fn get_external_styles(page: &Page) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    let styles: Vec<String> = page
-        .evaluate(
-            r#"
-            Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
-                .filter(l => l.href)
-                .map(l => l.href)
-            "#,
-        )
-        .await?
-        .into_value()?;
-    Ok(styles)
+fn get_inline_js(tab: &headless_chrome::Tab) -> Result<String, Box<dyn std::error::Error>> {
+    let result = tab.evaluate(
+        r#"
+        Array.from(document.scripts)
+            .filter(s => !s.src && s.textContent)
+            .map(s => s.textContent)
+            .join('\n')
+        "#,
+        false,
+    )?;
+
+    Ok(result.value.unwrap_or_default().as_str().unwrap_or("").to_string())
 }
 
-async fn get_title(page: &Page) -> Result<String, Box<dyn std::error::Error>> {
-    let title: String = page.evaluate("document.title").await?.into_value()?;
-    Ok(title)
+fn get_title(tab: &headless_chrome::Tab) -> Result<String, Box<dyn std::error::Error>> {
+    let result = tab.evaluate("document.title", false)?;
+    Ok(result.value.unwrap_or_default().as_str().unwrap_or("").to_string())
 }
 
 fn generate_clean_html(html: &str, title: &str) -> String {
-    // Add proper head with stylesheet link
     let head = format!(
         r#"<!DOCTYPE html>
 <html>
@@ -434,7 +316,6 @@ fn generate_clean_html(html: &str, title: &str) -> String {
         title
     );
 
-    // Extract body content
     if let Some(body_start) = html.find("<body") {
         if let Some(body_end) = html.rfind("</body>") {
             let body = &html[body_start..body_end + 7];
@@ -451,75 +332,30 @@ fn generate_project_toml(
     libs: &[DetectedLibrary],
     css: &CssParseResult,
 ) -> String {
-
     let mut toml = String::new();
 
-    // Meta
     toml.push_str("[meta]\n");
     toml.push_str(&format!("name = \"{}\"\n", sanitize_name(title)));
     toml.push_str("version = \"1.0.0\"\n");
-    toml.push_str("generator = \"crawlwe\"\n");
-    toml.push_str(&format!("captured_at = \"{}\"\n", chrono::Utc::now().to_rfc3339()));
-    toml.push('\n');
+    toml.push_str("generator = \"crawlwe\"\n\n");
 
-    // Source
     toml.push_str("[source]\n");
     toml.push_str(&format!("url = \"{}\"\n", url));
-    toml.push_str(&format!("title = \"{}\"\n", title.replace('"', "\\\"")));
-    toml.push('\n');
+    toml.push_str(&format!("title = \"{}\"\n\n", title.replace('"', "\\\"")));
 
-    // Technologies
     toml.push_str("[technologies]\n");
-
-    let animation_libs: Vec<_> = libs.iter().filter(|l| l.category == "animation").collect();
-    let graphics_libs: Vec<_> = libs.iter().filter(|l| l.category == "3d" || l.category == "2d").collect();
-    let ui_libs: Vec<_> = libs.iter().filter(|l| l.category == "ui").collect();
-    let css_libs: Vec<_> = libs.iter().filter(|l| l.category == "css").collect();
-
-    if !css_libs.is_empty() {
-        toml.push_str(&format!("css_framework = \"{}\"\n", css_libs[0].name));
-    }
-    if !ui_libs.is_empty() {
-        toml.push_str(&format!("ui_framework = \"{}\"\n", ui_libs[0].name));
-    }
-    if !animation_libs.is_empty() {
-        let names: Vec<_> = animation_libs.iter().map(|l| format!("\"{}\"", l.name)).collect();
-        toml.push_str(&format!("animation_libs = [{}]\n", names.join(", ")));
-    }
-    if !graphics_libs.is_empty() {
-        let names: Vec<_> = graphics_libs.iter().map(|l| format!("\"{}\"", l.name)).collect();
-        toml.push_str(&format!("graphics_libs = [{}]\n", names.join(", ")));
-    }
-    toml.push('\n');
-
-    // Dependencies
-    toml.push_str("[dependencies]\n\n");
-
-    toml.push_str("[dependencies.scripts]\n");
     for lib in libs {
-        let cdn_url = match &lib.source {
-            LibrarySource::Url(url) => Some(url.clone()),
-            _ => LibraryCDN::get_js(&lib.name, lib.version.as_deref()),
-        };
-        if let Some(url) = cdn_url {
-            if let Some(version) = &lib.version {
-                toml.push_str(&format!("{} = {{ version = \"{}\", cdn = \"{}\" }}\n",
-                    lib.name.replace('-', "_").replace('.', "_"), version, url));
-            } else {
-                toml.push_str(&format!("{} = \"{}\"\n",
-                    lib.name.replace('-', "_").replace('.', "_"), url));
-            }
-        }
+        toml.push_str(&format!("{} = \"{}\"\n",
+            lib.name.replace('-', "_"),
+            lib.version.as_deref().unwrap_or("*")));
     }
     toml.push('\n');
 
-    // Fonts
     if !css.fonts.is_empty() {
-        toml.push_str("[dependencies.fonts]\n");
+        toml.push_str("[fonts]\n");
         for font in &css.fonts {
             let url = LibraryCDN::get_font_url(font, &["400".to_string(), "700".to_string()]);
-            toml.push_str(&format!("\"{}\" = {{ weights = [\"400\", \"700\"], url = \"{}\" }}\n",
-                font, url));
+            toml.push_str(&format!("\"{}\" = \"{}\"\n", font, url));
         }
     }
 

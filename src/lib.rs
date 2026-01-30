@@ -27,4 +27,3 @@ pub mod parser {
 // Re-export main types
 pub use analyzer::Analyzer;
 pub use models::*;
-pub use capture::BrowserController;
