@@ -136,8 +136,8 @@ pub fn run(
     // Save files
     println!("\nSaving files...");
 
-    // Clean HTML with base href for assets
-    let clean_html = generate_clean_html(&html_optimized.html, &title, url);
+    // Clean HTML with embedded CSS and base href for assets
+    let clean_html = generate_clean_html(&html_optimized.html, &title, url, &css_optimized.css);
     fs::write(output.join("index.html"), &clean_html)?;
     println!("  index.html");
 
@@ -303,7 +303,7 @@ fn get_title(tab: &headless_chrome::Tab) -> Result<String, Box<dyn std::error::E
     Ok(result.value.unwrap_or_default().as_str().unwrap_or("").to_string())
 }
 
-fn generate_clean_html(html: &str, title: &str, base_url: &str) -> String {
+fn generate_clean_html(html: &str, title: &str, base_url: &str, css: &str) -> String {
     // Extract base URL (without path) for assets
     let base_href = if let Ok(url) = Url::parse(base_url) {
         format!("{}://{}", url.scheme(), url.host_str().unwrap_or(""))
@@ -311,6 +311,7 @@ fn generate_clean_html(html: &str, title: &str, base_url: &str) -> String {
         base_url.to_string()
     };
 
+    // Embed CSS inline so base href doesn't affect it
     let head = format!(
         r#"<!DOCTYPE html>
 <html>
@@ -319,9 +320,11 @@ fn generate_clean_html(html: &str, title: &str, base_url: &str) -> String {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <base href="{}/">
     <title>{}</title>
-    <link rel="stylesheet" href="styles.css">
+    <style>
+{}
+    </style>
 </head>"#,
-        base_href, title
+        base_href, title, css
     );
 
     if let Some(body_start) = html.find("<body") {
