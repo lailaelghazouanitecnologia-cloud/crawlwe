@@ -65,10 +65,17 @@ pub async fn run(
     println!("Waiting {}s for JavaScript...", wait);
     tokio::time::sleep(Duration::from_secs(wait)).await;
 
+    // Wait for stylesheets to load
+    println!("Waiting for stylesheets...");
+    wait_for_stylesheets(&page).await?;
+
     // Scroll to load lazy content
     println!("Scrolling for lazy content...");
     scroll_page(&page).await?;
     tokio::time::sleep(Duration::from_secs(2)).await;
+
+    // Wait for any animations/transitions triggered by scroll
+    wait_for_idle(&page).await?;
 
     // Extract all data
     println!("\nExtracting content...");
@@ -220,6 +227,51 @@ pub async fn run(
     Ok(())
 }
 
+async fn wait_for_stylesheets(page: &Page) -> Result<(), Box<dyn std::error::Error>> {
+    page.evaluate(
+        r#"
+        (async () => {
+            // Wait for all link[rel=stylesheet] to load
+            const links = document.querySelectorAll('link[rel="stylesheet"]');
+            const promises = Array.from(links).map(link => {
+                if (link.sheet) return Promise.resolve();
+                return new Promise((resolve) => {
+                    link.addEventListener('load', resolve);
+                    link.addEventListener('error', resolve);
+                    // Timeout after 5s per stylesheet
+                    setTimeout(resolve, 5000);
+                });
+            });
+            await Promise.all(promises);
+
+            // Wait for fonts to load
+            if (document.fonts && document.fonts.ready) {
+                await document.fonts.ready;
+            }
+        })()
+        "#,
+    )
+    .await?;
+    Ok(())
+}
+
+async fn wait_for_idle(page: &Page) -> Result<(), Box<dyn std::error::Error>> {
+    page.evaluate(
+        r#"
+        new Promise(resolve => {
+            // Use requestIdleCallback if available, otherwise setTimeout
+            if (window.requestIdleCallback) {
+                requestIdleCallback(() => resolve(), { timeout: 2000 });
+            } else {
+                setTimeout(resolve, 500);
+            }
+        })
+        "#,
+    )
+    .await?;
+    Ok(())
+}
+
 async fn scroll_page(page: &Page) -> Result<(), Box<dyn std::error::Error>> {
     page.evaluate(
         r#"
@@ -251,8 +303,11 @@ async fn get_all_css(page: &Page) -> Result<String, Box<dyn std::error::Error>> 
     let css: String = page
         .evaluate(
             r#"
-            (function() {
+            (async function() {
                 let css = '';
+                const fetchedUrls = new Set();
+
+                // 1. Get CSS from all stylesheets (inline and accessible external)
                 for (const sheet of document.styleSheets) {
                     try {
                         if (sheet.cssRules) {
@@ -262,13 +317,52 @@ async fn get_all_css(page: &Page) -> Result<String, Box<dyn std::error::Error>> 
                                 css += rule.cssText + '\n';
                             }
                             css += '\n';
+                            if (sheet.href) fetchedUrls.add(sheet.href);
                         }
                     } catch (e) {
-                        if (sheet.href) {
-                            css += `/* External (CORS): ${sheet.href} */\n`;
+                        // CORS-protected stylesheet - fetch it directly
+                        if (sheet.href && !fetchedUrls.has(sheet.href)) {
+                            try {
+                                const resp = await fetch(sheet.href);
+                                if (resp.ok) {
+                                    const text = await resp.text();
+                                    css += `/* Source: ${sheet.href} */\n`;
+                                    css += text + '\n\n';
+                                    fetchedUrls.add(sheet.href);
+                                }
+                            } catch (fetchErr) {
+                                css += `/* Could not fetch: ${sheet.href} */\n`;
+                            }
                         }
                     }
                 }
+
+                // 2. Get all inline <style> tags content (for CSS-in-JS)
+                const styleTags = document.querySelectorAll('style');
+                for (const style of styleTags) {
+                    if (style.textContent && style.textContent.trim()) {
+                        css += '/* Inline <style> tag */\n';
+                        css += style.textContent + '\n\n';
+                    }
+                }
+
+                // 3. Collect CSS custom properties from :root
+                const root = document.documentElement;
+                const rootStyles = getComputedStyle(root);
+                let rootVars = ':root {\n';
+                let hasVars = false;
+                for (let i = 0; i < rootStyles.length; i++) {
+                    const prop = rootStyles[i];
+                    if (prop.startsWith('--')) {
+                        rootVars += `  ${prop}: ${rootStyles.getPropertyValue(prop)};\n`;
+                        hasVars = true;
+                    }
+                }
+                rootVars += '}\n\n';
+                if (hasVars) {
+                    css += '/* Computed CSS Variables from :root */\n' + rootVars;
+                }
+
                 return css;
             })()
             "#,
