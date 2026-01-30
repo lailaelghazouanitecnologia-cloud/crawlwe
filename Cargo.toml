@@ -49,6 +49,12 @@ base64 = "0.22"
 regex-lite = "0.1"
 urlencoding = "2"
 
+# JavaScript parsing (OXC - fast Rust-native parser)
+oxc_parser = "0.41"
+oxc_ast = "0.41"
+oxc_allocator = "0.41"
+oxc_span = "0.41"
+
 [profile.release]
 lto = true
 opt-level = 3
