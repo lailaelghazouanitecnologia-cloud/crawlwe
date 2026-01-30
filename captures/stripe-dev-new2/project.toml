@@ -1,0 +1,36 @@
+[meta]
+name = "stripe-dot-dev"
+version = "1.0.0"
+generator = "crawlwe"
+mode = "hybrid"
+captured_at = "2026-01-30T21:18:46.877189558+00:00"
+
+[source]
+url = "https://stripe.dev/"
+title = "Stripe Dot Dev"
+
+[technologies]
+
+[assets]
+svgs = 14
+images = 0
+fonts = 4
+
+[assets.svgs]
+icons = 11 # Small reusable icons
+logos = 1 # Brand logos
+illustrations = 2 # Large decorative SVGs
+
+[assets.fonts]
+"sohne-mono" = { weights = ["300", "100"], files = ["assets/fonts/SohneMono-Extraleicht.woff2", "assets/fonts/SohneMono-Buch.woff2"] }
+"sohne-var" = { weights = ["400", "1 10000"], files = ["assets/fonts/Sohne-BuchKursiv.woff2", "assets/fonts/Sohne.woff2"] }
+
+[css]
+variables = 28
+keyframes = 3
+colors = 11
+
+# Import paths for use in your project:
+# import styles from './styles.css'
+# import { icons } from './assets/svgs/icons/'
+# import fonts from './assets/fonts/'
