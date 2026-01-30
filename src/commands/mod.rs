@@ -1,6 +1,7 @@
 //! CLI Commands
 
 pub mod fetch;
+pub mod fetch_static;
 pub mod batch;
 pub mod analyze;
 pub mod export;

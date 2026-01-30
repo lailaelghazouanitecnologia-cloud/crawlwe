@@ -19,6 +19,9 @@ path = "src/main.rs"
 tokio = { version = "1", features = ["full"] }
 futures = "0.3"
 
+# HTTP client
+reqwest = { version = "0.12", features = ["json"] }
+
 # Chrome DevTools Protocol
 chromiumoxide = { version = "0.7", default-features = false, features = ["tokio-runtime"] }
 

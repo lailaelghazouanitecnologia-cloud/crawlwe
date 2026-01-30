@@ -1,0 +1,339 @@
+//! Static fetch - Downloads HTML/CSS/JS via HTTP without browser
+//!
+//! This is faster and works in restricted environments where Chrome can't run.
+//! Limitations: No JavaScript execution, no computed styles.
+
+use regex::Regex;
+use std::fs;
+use std::path::Path;
+use url::Url;
+
+use crawlwe_core::pipeline::{CssMicroparser, LibMicroparser, CssOptimizer, HtmlOptimizer, CssOptimizeOptions, HtmlOptimizeOptions, DetectedLibrary, CssParseResult};
+use crawlwe_core::export::LibraryCDN;
+
+pub async fn run(
+    url: &str,
+    output: &Path,
+    project_toml: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
+    println!("CrawlWe - Static Fetch (HTTP)");
+    println!("==============================");
+    println!("URL: {}", url);
+    println!();
+
+    let base_url = Url::parse(url)?;
+    let client = reqwest::Client::builder()
+        .user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+        .timeout(std::time::Duration::from_secs(30))
+        .build()?;
+
+    // Create output structure
+    let data_dir = output.join("data");
+    let scripts_dir = output.join("scripts");
+    fs::create_dir_all(&data_dir)?;
+    fs::create_dir_all(&scripts_dir)?;
+
+    // Download HTML
+    println!("Downloading HTML...");
+    let html_response = client.get(url).send().await?;
+    let html_raw = html_response.text().await?;
+    println!("  HTML: {} bytes", html_raw.len());
+
+    // Extract title
+    let title = extract_title(&html_raw).unwrap_or_else(|| "Untitled".to_string());
+    println!("  Title: {}", title);
+
+    // Extract and download CSS
+    println!("\nDownloading CSS...");
+    let css_urls = extract_css_urls(&html_raw, &base_url);
+    println!("  Found {} stylesheets", css_urls.len());
+
+    let mut all_css = String::new();
+    for css_url in &css_urls {
+        match client.get(css_url).send().await {
+            Ok(resp) => {
+                match resp.text().await {
+                    Ok(css) => {
+                        all_css.push_str(&format!("/* Source: {} */\n", css_url));
+                        all_css.push_str(&css);
+                        all_css.push_str("\n\n");
+                        println!("    + {}", shorten_url(css_url));
+                    }
+                    Err(_) => {
+                        println!("    ! {} (failed to read)", shorten_url(css_url));
+                    }
+                }
+            }
+            Err(e) => {
+                println!("    ! {} ({})", shorten_url(css_url), e);
+            }
+        }
+    }
+
+    // Extract inline styles
+    let inline_css = extract_inline_styles(&html_raw);
+    if !inline_css.is_empty() {
+        all_css.push_str("/* Inline styles */\n");
+        all_css.push_str(&inline_css);
+        println!("  + inline styles: {} bytes", inline_css.len());
+    }
+
+    println!("  Total CSS: {} bytes", all_css.len());
+
+    // Extract external scripts
+    println!("\nFinding scripts...");
+    let script_urls = extract_script_urls(&html_raw, &base_url);
+    println!("  Found {} external scripts", script_urls.len());
+    for script_url in &script_urls {
+        println!("    - {}", shorten_url(script_url));
+    }
+
+    // Detect libraries from script URLs
+    let lib_result = LibMicroparser::parse(&script_urls, "");
+    println!("  Libraries detected: {}", lib_result.libraries.len());
+    for lib in &lib_result.libraries {
+        println!("    - {} ({})", lib.name, lib.category);
+    }
+
+    // Parse CSS
+    let css_parsed = CssMicroparser::parse(&all_css);
+    println!("\nCSS Analysis:");
+    println!("  Variables: {}", css_parsed.variables.len());
+    println!("  Keyframes: {}", css_parsed.keyframes.len());
+    println!("  Colors: {}", css_parsed.colors.len());
+    println!("  Fonts: {:?}", css_parsed.fonts);
+
+    // Optimize
+    println!("\nOptimizing...");
+    let html_optimized = HtmlOptimizer::optimize(&html_raw, &HtmlOptimizeOptions {
+        remove_comments: true,
+        remove_scripts: true,
+        remove_styles: false,
+        remove_data_attrs: false,
+        remove_framework_attrs: true,
+        remove_empty_attrs: true,
+        minify_whitespace: false,
+        format_output: true,
+        preserve_structure: true,
+    });
+
+    let css_optimized = CssOptimizer::optimize(&all_css, &CssOptimizeOptions::default());
+
+    println!("  HTML: {} -> {} bytes", html_raw.len(), html_optimized.stats.optimized_size);
+    println!("  CSS: {} -> {} bytes", all_css.len(), css_optimized.stats.optimized_size);
+
+    // Save files
+    println!("\nSaving files...");
+
+    // Clean HTML with stylesheet link
+    let clean_html = generate_clean_html(&html_optimized.html, &title);
+    fs::write(output.join("index.html"), &clean_html)?;
+    println!("  index.html");
+
+    // Raw HTML
+    fs::write(data_dir.join("raw.html"), &html_raw)?;
+    println!("  data/raw.html");
+
+    // CSS
+    fs::write(output.join("styles.css"), &css_optimized.css)?;
+    println!("  styles.css");
+
+    // Metadata
+    let metadata = serde_json::json!({
+        "url": url,
+        "domain": base_url.host_str(),
+        "title": title,
+        "mode": "static",
+        "extracted_at": chrono::Utc::now().to_rfc3339(),
+        "stats": {
+            "html_bytes": html_raw.len(),
+            "html_optimized_bytes": html_optimized.stats.optimized_size,
+            "css_bytes": all_css.len(),
+            "css_optimized_bytes": css_optimized.stats.optimized_size,
+            "external_scripts": script_urls.len(),
+            "external_styles": css_urls.len(),
+        },
+        "css_analysis": {
+            "variables": css_parsed.variables.len(),
+            "keyframes": css_parsed.keyframes.len(),
+            "colors": css_parsed.colors.len(),
+            "fonts": css_parsed.fonts,
+        },
+        "detected_libs": lib_result.libraries.iter().map(|l| {
+            serde_json::json!({
+                "name": l.name,
+                "category": l.category,
+                "version": l.version,
+            })
+        }).collect::<Vec<_>>(),
+    });
+    fs::write(data_dir.join("metadata.json"), serde_json::to_string_pretty(&metadata)?)?;
+    println!("  data/metadata.json");
+
+    // Scripts info
+    fs::write(
+        scripts_dir.join("external.json"),
+        serde_json::to_string_pretty(&script_urls)?,
+    )?;
+    println!("  scripts/external.json");
+
+    // Project.toml
+    if project_toml {
+        let toml_content = generate_project_toml(url, &title, &lib_result.libraries, &css_parsed);
+        fs::write(output.join("project.toml"), &toml_content)?;
+        println!("  project.toml");
+    }
+
+    println!("\nDone! Output: {:?}", output);
+    Ok(())
+}
+
+fn shorten_url(url: &str) -> String {
+    if url.len() > 60 {
+        format!("{}...", &url[..57])
+    } else {
+        url.to_string()
+    }
+}
+
+fn extract_title(html: &str) -> Option<String> {
+    let re = Regex::new(r"<title[^>]*>([^<]+)</title>").ok()?;
+    re.captures(html).map(|c| c[1].trim().to_string())
+}
+
+fn extract_css_urls(html: &str, base_url: &Url) -> Vec<String> {
+    let mut urls = Vec::new();
+    let re = Regex::new(r#"<link[^>]+rel=["']stylesheet["'][^>]+href=["']([^"']+)["']|<link[^>]+href=["']([^"']+)["'][^>]+rel=["']stylesheet["']"#).unwrap();
+
+    for cap in re.captures_iter(html) {
+        let href = cap.get(1).or_else(|| cap.get(2)).map(|m| m.as_str());
+        if let Some(href) = href {
+            if let Ok(full_url) = base_url.join(href) {
+                urls.push(full_url.to_string());
+            }
+        }
+    }
+    urls
+}
+
+fn extract_inline_styles(html: &str) -> String {
+    let mut styles = String::new();
+    let re = Regex::new(r"<style[^>]*>([\s\S]*?)</style>").unwrap();
+
+    for cap in re.captures_iter(html) {
+        styles.push_str(&cap[1]);
+        styles.push('\n');
+    }
+    styles
+}
+
+fn extract_script_urls(html: &str, base_url: &Url) -> Vec<String> {
+    let mut urls = Vec::new();
+    let re = Regex::new(r#"<script[^>]+src=["']([^"']+)["']"#).unwrap();
+
+    for cap in re.captures_iter(html) {
+        let src = &cap[1];
+        if let Ok(full_url) = base_url.join(src) {
+            urls.push(full_url.to_string());
+        }
+    }
+    urls
+}
+
+fn generate_clean_html(html: &str, title: &str) -> String {
+    let head = format!(
+        r#"<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{}</title>
+    <link rel="stylesheet" href="styles.css">
+</head>"#,
+        title
+    );
+
+    if let Some(body_start) = html.find("<body") {
+        if let Some(body_end) = html.rfind("</body>") {
+            let body = &html[body_start..body_end + 7];
+            return format!("{}\n{}\n</html>", head, body);
+        }
+    }
+
+    format!("{}\n<body>\n{}\n</body>\n</html>", head, html)
+}
+
+fn generate_project_toml(
+    url: &str,
+    title: &str,
+    libs: &[DetectedLibrary],
+    css: &CssParseResult,
+) -> String {
+    let mut toml = String::new();
+
+    toml.push_str("[meta]\n");
+    toml.push_str(&format!("name = \"{}\"\n", sanitize_name(title)));
+    toml.push_str("version = \"1.0.0\"\n");
+    toml.push_str("generator = \"crawlwe\"\n");
+    toml.push_str("mode = \"static\"\n");
+    toml.push_str(&format!("captured_at = \"{}\"\n", chrono::Utc::now().to_rfc3339()));
+    toml.push('\n');
+
+    toml.push_str("[source]\n");
+    toml.push_str(&format!("url = \"{}\"\n", url));
+    toml.push_str(&format!("title = \"{}\"\n", title.replace('"', "\\\"")));
+    toml.push('\n');
+
+    toml.push_str("[technologies]\n");
+    for lib in libs {
+        if lib.category == "css" {
+            toml.push_str(&format!("css_framework = \"{}\"\n", lib.name));
+            break;
+        }
+    }
+    for lib in libs {
+        if lib.category == "ui" {
+            toml.push_str(&format!("ui_framework = \"{}\"\n", lib.name));
+            break;
+        }
+    }
+
+    let animation_libs: Vec<_> = libs.iter().filter(|l| l.category == "animation").collect();
+    if !animation_libs.is_empty() {
+        let names: Vec<_> = animation_libs.iter().map(|l| format!("\"{}\"", l.name)).collect();
+        toml.push_str(&format!("animation_libs = [{}]\n", names.join(", ")));
+    }
+    toml.push('\n');
+
+    toml.push_str("[dependencies.scripts]\n");
+    for lib in libs {
+        if let Some(cdn_url) = LibraryCDN::get_js(&lib.name, lib.version.as_deref()) {
+            let key = lib.name.replace('-', "_").replace('.', "_").to_lowercase();
+            if let Some(version) = &lib.version {
+                toml.push_str(&format!("{} = {{ version = \"{}\", cdn = \"{}\" }}\n", key, version, cdn_url));
+            } else {
+                toml.push_str(&format!("{} = \"{}\"\n", key, cdn_url));
+            }
+        }
+    }
+    toml.push('\n');
+
+    if !css.fonts.is_empty() {
+        toml.push_str("[dependencies.fonts]\n");
+        for font in &css.fonts {
+            let font_url = LibraryCDN::get_font_url(font, &["400".to_string(), "700".to_string()]);
+            toml.push_str(&format!("\"{}\" = {{ weights = [\"400\", \"700\"], url = \"{}\" }}\n", font, font_url));
+        }
+    }
+
+    toml
+}
+
+fn sanitize_name(name: &str) -> String {
+    name.to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { '-' })
+        .collect::<String>()
+        .trim_matches('-')
+        .to_string()
+}

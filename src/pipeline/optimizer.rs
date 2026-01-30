@@ -26,7 +26,7 @@ lazy_static! {
 
     // Framework-specific cleanup
     static ref REACT_ATTRS: Regex = Regex::new(r#"\s+(?:data-reactroot|data-reactid|data-react-\w+)="[^"]*""#).unwrap();
-    static ref VUE_ATTRS: Regex = Regex::new(r#"\s+(?:data-v-[a-f0-9]+|v-\w+(?::[^=]+)?(?:="[^"]*")?)(?=\s|>)"#).unwrap();
+    static ref VUE_ATTRS: Regex = Regex::new(r#"\s+(?:data-v-[a-f0-9]+|v-\w+(?::[^=]+)?(?:="[^"]*")?)"#).unwrap();
     static ref ANGULAR_ATTRS: Regex = Regex::new(r#"\s+(?:_ngcontent-[^=]+|ng-\w+)(?:="[^"]*")?"#).unwrap();
     static ref NEXT_ATTRS: Regex = Regex::new(r#"\s+(?:data-nscript|data-n-\w+)="[^"]*""#).unwrap();
 }

@@ -75,6 +75,10 @@ enum Commands {
         /// Generate project.toml
         #[arg(long, default_value = "true")]
         project_toml: bool,
+
+        /// Use static HTTP fetch (no browser, faster but no JS rendering)
+        #[arg(long)]
+        r#static: bool,
     },
 
     /// Capture multiple pages from a file (one URL per line)
@@ -146,11 +150,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             screenshot,
             detect_libs,
             project_toml,
+            r#static,
         } => {
-            commands::fetch::run(
-                &url, &output, wait, width, height, screenshot, detect_libs, project_toml,
-            )
-            .await?;
+            if r#static {
+                commands::fetch_static::run(&url, &output, project_toml).await?;
+            } else {
+                commands::fetch::run(
+                    &url, &output, wait, width, height, screenshot, detect_libs, project_toml,
+                )
+                .await?;
+            }
         }
 
         Commands::Batch {
