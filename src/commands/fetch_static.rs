@@ -9,7 +9,7 @@ use std::fs;
 use std::path::Path;
 use url::Url;
 
-use crawlwe_core::pipeline::{CssMicroparser, LibMicroparser, CssOptimizer, HtmlOptimizer, CssOptimizeOptions, HtmlOptimizeOptions, DetectedLibrary, CssParseResult};
+use crawlwe_core::pipeline::{CssMicroparser, LibMicroparser, HtmlOptimizer, HtmlOptimizeOptions, DetectedLibrary, CssParseResult};
 use crawlwe_core::export::LibraryCDN;
 
 pub async fn run(
@@ -100,6 +100,20 @@ pub async fn run(
     let (html_with_local_images, html_image_map) = download_html_images(&client, &html_raw, &base_url, &images_dir).await;
     println!("  Downloaded {} images from HTML", html_image_map.len());
 
+    // Download Next.js optimized images
+    let (html_with_nextjs, nextjs_image_map) = download_nextjs_images(&client, &html_with_local_images, &base_url, &images_dir).await;
+    println!("  Downloaded {} Next.js images", nextjs_image_map.len());
+
+    // Download external SVGs
+    let (html_with_svgs, svg_map) = download_svg_images(&client, &html_with_nextjs, &base_url, &images_dir).await;
+    println!("  Downloaded {} SVG files", svg_map.len());
+
+    // Extract large inline SVGs to files
+    let (html_final, inline_svg_count) = extract_inline_svgs(&html_with_svgs, &images_dir);
+    if inline_svg_count > 0 {
+        println!("  Extracted {} inline SVGs", inline_svg_count);
+    }
+
     // Extract external scripts
     println!("\nFinding scripts...");
     let script_urls = extract_script_urls(&html_raw, &base_url);
@@ -124,7 +138,7 @@ pub async fn run(
 
     // Optimize
     println!("\nOptimizing...");
-    let html_optimized = HtmlOptimizer::optimize(&html_with_local_images, &HtmlOptimizeOptions {
+    let html_optimized = HtmlOptimizer::optimize(&html_final, &HtmlOptimizeOptions {
         remove_comments: true,
         remove_scripts: true,
         remove_styles: false,
@@ -172,7 +186,10 @@ pub async fn run(
             "external_scripts": script_urls.len(),
             "external_styles": css_urls.len(),
             "fonts_downloaded": font_map.len(),
-            "images_downloaded": image_map.len() + html_image_map.len(),
+            "images_downloaded": image_map.len() + html_image_map.len() + nextjs_image_map.len() + svg_map.len(),
+            "nextjs_images": nextjs_image_map.len(),
+            "svgs_downloaded": svg_map.len(),
+            "svgs_extracted": inline_svg_count,
         },
         "css_analysis": {
             "variables": css_parsed.variables.len(),
@@ -258,40 +275,6 @@ fn extract_script_urls(html: &str, base_url: &Url) -> Vec<String> {
         }
     }
     urls
-}
-
-fn generate_clean_html(html: &str, title: &str, base_url: &str, css: &str) -> String {
-    // Extract base URL (without path) for assets
-    let base_href = if let Ok(url) = Url::parse(base_url) {
-        format!("{}://{}", url.scheme(), url.host_str().unwrap_or(""))
-    } else {
-        base_url.to_string()
-    };
-
-    // Embed CSS inline so base href doesn't affect it
-    let head = format!(
-        r#"<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <base href="{}/">
-    <title>{}</title>
-    <style>
-{}
-    </style>
-</head>"#,
-        base_href, title, css
-    );
-
-    if let Some(body_start) = html.find("<body") {
-        if let Some(body_end) = html.rfind("</body>") {
-            let body = &html[body_start..body_end + 7];
-            return format!("{}\n{}\n</html>", head, body);
-        }
-    }
-
-    format!("{}\n<body>\n{}\n</body>\n</html>", head, html)
 }
 
 fn generate_project_toml(
@@ -577,4 +560,194 @@ async fn download_html_images(
     }
 
     (result_html, downloaded)
+}
+
+async fn download_nextjs_images(
+    client: &reqwest::Client,
+    html: &str,
+    base_url: &Url,
+    images_dir: &Path,
+) -> (String, HashMap<String, String>) {
+    let mut result_html = html.to_string();
+    let mut downloaded: HashMap<String, String> = HashMap::new();
+
+    // Match Next.js image URLs: /_next/image?url=...
+    // Handle both regular & and HTML-encoded &amp;
+    let re = Regex::new(r#"["']([^"']*/_next/image\?[^"'\s]+)["']"#).unwrap();
+
+    for cap in re.captures_iter(html) {
+        let img_url_raw = &cap[1];
+
+        // Skip srcset entries with pixel density (e.g., "1x", "2x")
+        if img_url_raw.ends_with("x") && img_url_raw.chars().rev().nth(1).map_or(false, |c| c.is_ascii_digit()) {
+            continue;
+        }
+
+        // Decode HTML entities in URL
+        let img_url_decoded = img_url_raw.replace("&amp;", "&");
+
+        // Skip if already downloaded (check both encoded and decoded)
+        if downloaded.contains_key(img_url_raw) || downloaded.contains_key(&img_url_decoded) {
+            continue;
+        }
+
+        // Build full URL
+        let full_url = if img_url_decoded.starts_with("http") {
+            img_url_decoded.clone()
+        } else {
+            match base_url.join(&img_url_decoded) {
+                Ok(u) => u.to_string(),
+                Err(_) => continue,
+            }
+        };
+
+        // Extract original filename from url parameter
+        let filename = extract_nextjs_filename(&img_url_decoded);
+
+        match client.get(&full_url).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                match resp.bytes().await {
+                    Ok(bytes) => {
+                        let local_path = images_dir.join(&filename);
+
+                        if fs::write(&local_path, &bytes).is_ok() {
+                            let relative_path = format!("assets/images/{}", filename);
+                            downloaded.insert(img_url_raw.to_string(), relative_path.clone());
+                            println!("    + {} ({} bytes) [Next.js]", filename, bytes.len());
+
+                            // Replace in HTML (both encoded and decoded versions)
+                            result_html = result_html.replace(img_url_raw, &relative_path);
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+            _ => {}
+        }
+    }
+
+    (result_html, downloaded)
+}
+
+fn extract_nextjs_filename(url: &str) -> String {
+    // Try to extract from url= parameter
+    if let Some(start) = url.find("url=") {
+        let rest = &url[start + 4..];
+        let encoded_url = rest.split('&').next().unwrap_or("");
+
+        // URL decode
+        if let Ok(decoded) = urlencoding::decode(encoded_url) {
+            let path = decoded.to_string();
+            if let Some(filename) = path.split('/').last() {
+                // Remove query params from filename
+                let clean_name = filename.split('?').next().unwrap_or(filename);
+                if !clean_name.is_empty() {
+                    return clean_name.to_string();
+                }
+            }
+        }
+    }
+
+    // Fallback: generate name from hash
+    format!("nextjs-{}.webp", &url.len())
+}
+
+async fn download_svg_images(
+    client: &reqwest::Client,
+    html: &str,
+    base_url: &Url,
+    images_dir: &Path,
+) -> (String, HashMap<String, String>) {
+    let mut result_html = html.to_string();
+    let mut downloaded: HashMap<String, String> = HashMap::new();
+
+    // Match <img src="*.svg">
+    let re = Regex::new(r#"<img[^>]+src=["']([^"']+\.svg)["']"#).unwrap();
+
+    for cap in re.captures_iter(html) {
+        let svg_path = &cap[1];
+
+        if svg_path.starts_with("data:") || svg_path.starts_with("assets/") {
+            continue;
+        }
+
+        let svg_url = if svg_path.starts_with("http") {
+            svg_path.to_string()
+        } else {
+            match base_url.join(svg_path) {
+                Ok(u) => u.to_string(),
+                Err(_) => continue,
+            }
+        };
+
+        if downloaded.contains_key(&svg_url) {
+            continue;
+        }
+
+        match client.get(&svg_url).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                match resp.text().await {
+                    Ok(svg_content) => {
+                        let filename = svg_path.split('/').last().unwrap_or("image.svg");
+                        let local_path = images_dir.join(filename);
+
+                        if fs::write(&local_path, &svg_content).is_ok() {
+                            let relative_path = format!("assets/images/{}", filename);
+                            downloaded.insert(svg_url.clone(), relative_path.clone());
+                            println!("    + {} ({} bytes) [SVG]", filename, svg_content.len());
+
+                            // Replace src in HTML
+                            result_html = result_html.replace(svg_path, &relative_path);
+                        }
+                    }
+                    Err(_) => {}
+                }
+            }
+            _ => {}
+        }
+    }
+
+    (result_html, downloaded)
+}
+
+fn extract_inline_svgs(html: &str, images_dir: &Path) -> (String, usize) {
+    let mut result_html = html.to_string();
+    let mut count = 0;
+
+    // Match inline <svg>...</svg> tags (simplified - matches most common cases)
+    let re = Regex::new(r#"<svg[^>]*>[\s\S]*?</svg>"#).unwrap();
+
+    for (i, cap) in re.find_iter(html).enumerate() {
+        let svg_content = cap.as_str();
+
+        // Skip very small SVGs (likely icons that are fine inline)
+        if svg_content.len() < 500 {
+            continue;
+        }
+
+        let filename = format!("inline-svg-{}.svg", i);
+        let local_path = images_dir.join(&filename);
+
+        // Add XML declaration if not present
+        let full_svg = if svg_content.starts_with("<?xml") {
+            svg_content.to_string()
+        } else {
+            format!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n{}", svg_content)
+        };
+
+        if fs::write(&local_path, &full_svg).is_ok() {
+            let relative_path = format!("assets/images/{}", filename);
+
+            // Replace inline SVG with <img> tag
+            let img_tag = format!(
+                r#"<img src="{}" alt="SVG graphic" class="inline-svg">"#,
+                relative_path
+            );
+            result_html = result_html.replacen(svg_content, &img_tag, 1);
+            count += 1;
+            println!("    + {} ({} bytes) [inline]", filename, svg_content.len());
+        }
+    }
+
+    (result_html, count)
 }

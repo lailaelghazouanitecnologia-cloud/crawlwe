@@ -47,6 +47,7 @@ thiserror = "1"
 url = "2"
 base64 = "0.22"
 regex-lite = "0.1"
+urlencoding = "2"
 
 [profile.release]
 lto = true
