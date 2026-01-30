@@ -3,9 +3,9 @@
 //! Automatically detects and loads appropriate parsers for each library.
 
 use super::{
-    AnimationDefinition, DetectedLibrary, LibraryAnalysis, LibraryCategory,
+    DetectedLibrary, LibraryAnalysis, LibraryCategory,
     GsapParser, FramerMotionParser, StyledComponentsParser, ReactParser,
-    ThreeJsParser, TailwindParser, AnimeJsParser,
+    ThreeJsParser, TailwindParser, AnimeJsParser, WebflowParser,
 };
 use crate::js::analyzer::JsAnalysisResult;
 use serde::{Deserialize, Serialize};
@@ -90,6 +90,7 @@ impl LibraryRegistry {
             Box::new(ThreeJsParser::new()),
             Box::new(TailwindParser::new()),
             Box::new(AnimeJsParser::new()),
+            Box::new(WebflowParser::new()),
         ];
 
         Self { parsers }

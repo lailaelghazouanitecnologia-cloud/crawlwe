@@ -10,6 +10,7 @@ pub mod react;
 pub mod three;
 pub mod tailwind;
 pub mod anime;
+pub mod webflow;
 pub mod registry;
 
 pub use registry::{LibraryRegistry, LibraryParser, LibraryEffect};
@@ -20,6 +21,7 @@ pub use react::ReactParser;
 pub use three::ThreeJsParser;
 pub use tailwind::TailwindParser;
 pub use anime::AnimeJsParser;
+pub use webflow::WebflowParser;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

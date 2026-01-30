@@ -11,6 +11,7 @@ use url::Url;
 
 use crawlwe_core::pipeline::{CssMicroparser, LibMicroparser, HtmlOptimizer, HtmlOptimizeOptions, DetectedLibrary, CssParseResult};
 use crawlwe_core::export::LibraryCDN;
+use crawlwe_core::js::{JsAnalyzer, LibraryRegistry};
 
 pub async fn run(
     url: &str,
@@ -1193,6 +1194,119 @@ pub async fn run_hybrid(
         println!("   + project.toml");
     }
 
+    // Phase 6b: Analyze JS with library parsers (NEW!)
+    println!("\n6b. Library-specific JS analysis...");
+    let library_css = analyze_js_with_library_parsers(&client, &script_urls, &html_classes).await;
+    if !library_css.is_empty() {
+        // Append library-generated CSS to the file
+        let mut final_css_with_libs = fs::read_to_string(output.join("styles.css"))?;
+        final_css_with_libs.push_str("\n\n/* === Library-Generated CSS === */\n");
+        final_css_with_libs.push_str(&library_css);
+        fs::write(output.join("styles.css"), &final_css_with_libs)?;
+        println!("   + Added {} bytes of library CSS", library_css.len());
+    }
+
     println!("\n✓ Done! Output: {:?}", output);
     Ok(())
+}
+
+/// Download and analyze JavaScript files with library-specific parsers
+async fn analyze_js_with_library_parsers(
+    client: &reqwest::Client,
+    script_urls: &[String],
+    html_classes: &[String],
+) -> String {
+    let mut all_js_code = String::new();
+    let mut generated_css = String::new();
+
+    // Download relevant JS files (skip tiny chunks and third-party analytics)
+    let relevant_scripts: Vec<_> = script_urls
+        .iter()
+        .filter(|url| {
+            !url.contains("analytics") &&
+            !url.contains("gtag") &&
+            !url.contains("gtm") &&
+            !url.contains("seline") &&
+            !url.contains("hotjar") &&
+            !url.contains("tracking") &&
+            (url.contains("app") ||
+             url.contains("main") ||
+             url.contains("chunk") ||
+             url.contains("bundle") ||
+             url.contains("webflow") ||
+             url.ends_with(".js"))
+        })
+        .take(15) // Limit to avoid too many requests
+        .collect();
+
+    println!("   Analyzing {} JS files...", relevant_scripts.len());
+
+    for script_url in relevant_scripts {
+        match client.get(script_url.as_str()).send().await {
+            Ok(resp) if resp.status().is_success() => {
+                if let Ok(js_content) = resp.text().await {
+                    // Skip tiny files
+                    if js_content.len() > 500 {
+                        all_js_code.push_str(&format!("\n// Source: {}\n", script_url));
+                        all_js_code.push_str(&js_content);
+                        all_js_code.push('\n');
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    if all_js_code.is_empty() {
+        println!("   No JS code downloaded");
+        return String::new();
+    }
+
+    println!("   Downloaded {} bytes of JS", all_js_code.len());
+
+    // Analyze with JsAnalyzer
+    let mut analysis = JsAnalyzer::analyze(&all_js_code);
+
+    // Add HTML classes to the analysis
+    for class in html_classes {
+        if !analysis.classes.contains(class) {
+            analysis.classes.push(class.clone());
+        }
+    }
+
+    // Use library registry to detect and analyze
+    let registry = LibraryRegistry::new();
+    let detected = registry.detect_libraries(&analysis);
+
+    if !detected.is_empty() {
+        println!("   Libraries detected by parsers:");
+        for lib in &detected {
+            println!("    - {} ({})", lib.name, lib.category.as_str());
+        }
+    }
+
+    // Run library-specific analysis
+    let lib_analysis = registry.analyze(&all_js_code, &analysis);
+
+    // Generate CSS from library analysis
+    if !lib_analysis.animations.is_empty() {
+        println!("   Animations extracted: {}", lib_analysis.animations.len());
+        generated_css.push_str(&lib_analysis.to_css());
+    }
+
+    if !lib_analysis.generated_css.is_empty() {
+        for css_block in &lib_analysis.generated_css {
+            if !generated_css.contains(css_block) {
+                generated_css.push_str(css_block);
+                generated_css.push_str("\n\n");
+            }
+        }
+    }
+
+    // Print warnings
+    for warning in &lib_analysis.warnings {
+        println!("   ⚠ {}", warning);
+    }
+
+    generated_css
 }
