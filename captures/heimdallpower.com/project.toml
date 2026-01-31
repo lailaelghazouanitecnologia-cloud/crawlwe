@@ -1,0 +1,35 @@
+[meta]
+name = "heimdall-power---the-power-of-knowing"
+version = "1.0.0"
+generator = "crawlwe"
+mode = "hybrid"
+captured_at = "2026-01-31T01:52:40.917375204+00:00"
+
+[source]
+url = "https://www.heimdallpower.com"
+title = "Heimdall Power | The Power of Knowing"
+
+[technologies]
+
+[assets]
+svgs = 20
+images = 0
+fonts = 4
+
+[assets.svgs]
+icons = 15 # Small reusable icons
+illustrations = 4 # Large decorative SVGs
+
+[assets.fonts]
+"NimbusSanL" = { weights = ["400", "700"], files = ["assets/fonts/683717fbe2bf1a51dc1c0fbc_nimbussanl-bold-webfont.woff2", "assets/fonts/683717fb968e93c1364fdca8_nimbussanl-regu-webfont.woff2"] }
+"Geist mono" = { weights = ["400", "100"], files = ["assets/fonts/683875faec037e073f97ac46_GeistMono-Regular.woff2", "assets/fonts/68596d504c7f5f9bfba9d378_GeistMono-Thin.woff2"] }
+
+[css]
+variables = 35
+keyframes = 4
+colors = 60
+
+# Import paths for use in your project:
+# import styles from './styles.css'
+# import { icons } from './assets/svgs/icons/'
+# import fonts from './assets/fonts/'

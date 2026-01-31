@@ -1,0 +1,73 @@
+{
+  "asset_extraction": {
+    "data_uris_skipped": 0,
+    "errors": 0,
+    "fonts_found": 4,
+    "images_found": 4,
+    "imports_found": 0,
+    "invalid_urls": 0,
+    "local_fonts": 0,
+    "total_urls_found": 8
+  },
+  "asset_registry": {
+    "duplicate_svgs": 8,
+    "fonts": 4,
+    "icons": 15,
+    "illustrations": 4,
+    "images": 0,
+    "logos": 0,
+    "total_svgs": 28,
+    "unique_svgs": 20
+  },
+  "css_analysis": {
+    "colors": 60,
+    "keyframes": 4,
+    "variables": 35
+  },
+  "detected_libs": [
+    {
+      "category": "unknown",
+      "name": "6837014cb4393ef80839a179%2F6544eda5f000985a163a8687%2F691f0c95d275be118124633a%2Ffinsweetcomponentsconfig-1",
+      "version": null
+    },
+    {
+      "category": "unknown",
+      "name": "6837014cb4393ef80839a179%2F66ba5a08efe71070f98dd10a%2F68ee3c039dbf5ff726af8db4%2Fmwzxbk6f-1",
+      "version": null
+    },
+    {
+      "category": "utility",
+      "name": "lodash",
+      "version": null
+    },
+    {
+      "category": "utility",
+      "name": "jquery",
+      "version": null
+    },
+    {
+      "category": "viz",
+      "name": "d3",
+      "version": null
+    }
+  ],
+  "domain": "www.heimdallpower.com",
+  "extracted_at": "2026-01-31T01:52:40.916480977+00:00",
+  "mode": "hybrid",
+  "stats": {
+    "css_bytes": 120949,
+    "css_sources": 2,
+    "external_scripts": 6,
+    "fonts_downloaded": 4,
+    "html_bytes": 121163,
+    "html_classes": 203,
+    "html_optimized_bytes": 68211,
+    "images_downloaded": 3,
+    "js_css_extracted": false,
+    "nextjs_images": 0,
+    "svgs_downloaded": 0,
+    "svgs_extracted": 17
+  },
+  "title": "Heimdall Power | The Power of Knowing",
+  "url": "https://www.heimdallpower.com"
+}

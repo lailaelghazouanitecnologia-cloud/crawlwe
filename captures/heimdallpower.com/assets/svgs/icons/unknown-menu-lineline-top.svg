@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Orange background -->
+    <path d="M0 4C0 1.79086 1.79086 0 4 0H28C30.2091 0 32 1.79086 32 4V28C32 30.2091 30.2091 32 28 32H4C1.79086 32 0 30.2091 0 28V4Z" fill="#FF5C39"/>
+
+    <!-- Top line -->
+    <path class="menu-line line-top" d="M6 12H26" stroke="#111113" stroke-linecap="square"/>
+
+    <!-- Middle line -->
+    <path class="menu-line line-middle" d="M11 16H21" stroke="#111113" stroke-linecap="square"/>
+
+    <!-- Bottom line -->
+    <path class="menu-line line-bottom" d="M6 20H26" stroke="#111113" stroke-linecap="square"/>
+  </svg>
