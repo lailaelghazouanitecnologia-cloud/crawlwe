@@ -83,6 +83,10 @@ enum Commands {
         /// Use hybrid mode (static + CSS discovery + JS extraction)
         #[arg(long)]
         hybrid: bool,
+
+        /// Use browser mode (headless Chrome with full JS rendering)
+        #[arg(long)]
+        browser: bool,
     },
 
     /// Capture multiple pages from a file (one URL per line)
@@ -156,8 +160,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             project_toml,
             r#static,
             hybrid,
+            browser,
         } => {
-            if hybrid {
+            if browser {
+                commands::fetch_browser::run(&url, &output, project_toml).await?;
+            } else if hybrid {
                 commands::fetch_static::run_hybrid(&url, &output, project_toml).await?;
             } else if r#static {
                 commands::fetch_static::run(&url, &output, project_toml).await?;

@@ -12,7 +12,7 @@ use url::Url;
 use crawlwe_core::pipeline::{CssMicroparser, LibMicroparser, HtmlOptimizer, HtmlOptimizeOptions, DetectedLibrary, CssParseResult};
 use crawlwe_core::export::LibraryCDN;
 use crawlwe_core::js::{JsAnalyzer, LibraryRegistry, JsToCssConverter, CssModulesParser, TailwindGenerator, SmartCssExtractor};
-use crawlwe_core::css::{CssAssetExtractor, CssAssetExtractionResult, ImageContext};
+use crawlwe_core::css::{CssAssetExtractor, CssAssetExtractionResult, ImageContext, CssFormatter, CssFormatOptions};
 use crawlwe_core::assets::{AssetRegistry, SvgAsset, SvgCategory, CssStats, ImageContext as AssetImageContext};
 
 pub async fn run(
@@ -1344,8 +1344,26 @@ pub async fn run_hybrid(
     println!("   CSS Variables: {}", css_parsed.variables.len());
     println!("   Keyframes: {}", css_parsed.keyframes.len());
 
-    // Phase 6: Optimize and save
-    println!("\n6. Optimizing & saving...");
+    // Phase 6: Format CSS and optimize
+    println!("\n6. Formatting CSS...");
+
+    let formatter = CssFormatter::with_options(CssFormatOptions {
+        indent_size: 2,
+        blank_lines_between_rules: true,
+        add_section_comments: true,
+        group_properties: true,
+        ..Default::default()
+    });
+    let format_result = formatter.format(&css_with_local_assets);
+    println!("   Rules formatted: {}", format_result.stats.rules_formatted);
+    println!("   Keyframes: {}", format_result.stats.keyframes_formatted);
+    println!("   Media queries: {}", format_result.stats.media_queries_formatted);
+    println!("   Font faces: {}", format_result.stats.font_faces_formatted);
+    println!("   Variables: {}", format_result.stats.variables_found);
+
+    let final_css = format_result.css;
+
+    println!("\n7. Optimizing & saving...");
 
     let html_optimized = HtmlOptimizer::optimize(&html_final, &HtmlOptimizeOptions {
         remove_comments: true,
@@ -1359,20 +1377,18 @@ pub async fn run_hybrid(
         preserve_structure: true,
     });
 
-    let final_css = &css_with_local_assets;
-
     println!("   HTML: {} -> {} bytes", html_raw.len(), html_optimized.stats.optimized_size);
-    println!("   CSS: {} bytes", final_css.len());
+    println!("   CSS: {} bytes (formatted)", final_css.len());
 
     // Save files
-    let clean_html = generate_clean_html_local(&html_optimized.html, &title, final_css);
+    let clean_html = generate_clean_html_local(&html_optimized.html, &title, &final_css);
     fs::write(output.join("index.html"), &clean_html)?;
     println!("   + index.html");
 
     fs::write(data_dir.join("raw.html"), &html_raw)?;
     println!("   + data/raw.html");
 
-    fs::write(output.join("styles.css"), final_css)?;
+    fs::write(output.join("styles.css"), &final_css)?;
     println!("   + styles.css");
 
     // Register fonts and images in the asset registry
