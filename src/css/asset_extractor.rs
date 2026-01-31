@@ -43,6 +43,7 @@ pub struct CssAssetExtractionResult {
 #[derive(Debug, Clone)]
 pub struct FontInfo {
     pub url: String,
+    pub original_url: String,  // The original URL as it appears in CSS (for replacement)
     pub format: Option<String>,
     pub font_family: Option<String>,
     pub font_weight: Option<String>,
@@ -53,6 +54,7 @@ pub struct FontInfo {
 #[derive(Debug, Clone)]
 pub struct ImageInfo {
     pub url: String,
+    pub original_url: String,  // The original URL as it appears in CSS (for replacement)
     pub context: ImageContext,
     pub local_path: Option<String>,
 }
@@ -225,6 +227,7 @@ impl CssAssetExtractor {
                     if Self::is_font_url(&resolved) {
                         result.fonts.insert(resolved.clone(), FontInfo {
                             url: resolved,
+                            original_url: font_url.to_string(),  // Keep original for CSS replacement
                             format,
                             font_family: font_family.clone(),
                             font_weight: font_weight.clone(),
@@ -246,8 +249,10 @@ impl CssAssetExtractor {
             let local_name = cap.get(1).map(|m| m.as_str()).unwrap_or("");
             if !local_name.is_empty() {
                 // Local fonts don't need downloading, but track them
+                let local_url = format!("local({})", local_name);
                 result.fonts.entry(format!("local:{}", local_name)).or_insert(FontInfo {
-                    url: format!("local({})", local_name),
+                    url: local_url.clone(),
+                    original_url: local_url,
                     format: None,
                     font_family: font_family.clone(),
                     font_weight: font_weight.clone(),
@@ -314,6 +319,7 @@ impl CssAssetExtractor {
                         if Self::is_font_url(&resolved) {
                             result.fonts.insert(resolved.clone(), FontInfo {
                                 url: resolved,
+                                original_url: url_str.to_string(),  // Keep original for CSS replacement
                                 format: None,
                                 font_family: None,
                                 font_weight: None,
@@ -325,6 +331,7 @@ impl CssAssetExtractor {
                             // It's an image or used in an image context
                             result.images.insert(resolved.clone(), ImageInfo {
                                 url: resolved,
+                                original_url: url_str.to_string(),  // Keep original for CSS replacement
                                 context,
                                 local_path: None,
                             });

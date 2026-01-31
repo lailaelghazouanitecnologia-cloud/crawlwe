@@ -32,10 +32,10 @@
     }
   ],
   "domain": "stripe.dev",
-  "extracted_at": "2026-01-31T01:52:27.040522859+00:00",
+  "extracted_at": "2026-01-31T02:00:04.380588257+00:00",
   "mode": "hybrid",
   "stats": {
-    "css_bytes": 46193,
+    "css_bytes": 46213,
     "css_sources": 4,
     "external_scripts": 11,
     "fonts_downloaded": 4,

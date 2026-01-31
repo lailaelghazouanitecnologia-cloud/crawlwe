@@ -822,8 +822,8 @@ async fn download_css_assets_comprehensive(
                             };
                             println!("     + {} ({} bytes){}", filename, bytes.len(), meta);
 
-                            // Replace URL in CSS
-                            result_css = result_css.replace(url, &relative_path);
+                            // Replace ORIGINAL URL in CSS (not resolved URL)
+                            result_css = result_css.replace(&font_info.original_url, &relative_path);
                         }
                     }
                     Err(e) => {
@@ -877,8 +877,8 @@ async fn download_css_assets_comprehensive(
                             };
                             println!("     + {} ({} bytes){}", filename, bytes.len(), context);
 
-                            // Replace URL in CSS
-                            result_css = result_css.replace(url, &relative_path);
+                            // Replace ORIGINAL URL in CSS (not resolved URL)
+                            result_css = result_css.replace(&image_info.original_url, &relative_path);
                         }
                     }
                     Err(e) => {
