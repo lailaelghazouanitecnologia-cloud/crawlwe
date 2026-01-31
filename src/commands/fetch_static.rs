@@ -11,7 +11,7 @@ use url::Url;
 
 use crawlwe_core::pipeline::{CssMicroparser, LibMicroparser, HtmlOptimizer, HtmlOptimizeOptions, DetectedLibrary, CssParseResult};
 use crawlwe_core::export::LibraryCDN;
-use crawlwe_core::js::{JsAnalyzer, LibraryRegistry, JsToCssConverter};
+use crawlwe_core::js::{JsAnalyzer, LibraryRegistry, JsToCssConverter, CssModulesParser, TailwindGenerator, SmartCssExtractor};
 use crawlwe_core::css::{CssAssetExtractor, CssAssetExtractionResult, ImageContext};
 use crawlwe_core::assets::{AssetRegistry, SvgAsset, SvgCategory, CssStats, ImageContext as AssetImageContext};
 
@@ -1596,6 +1596,58 @@ async fn analyze_js_with_library_parsers(
         generated_css.push_str("\n/* === JS to CSS Conversion === */\n");
         generated_css.push_str(&conversion_result.css);
         generated_css.push_str("\n");
+    }
+
+    // NEW: CSS Modules Parser - detect hashed class patterns
+    println!("   Parsing CSS Modules patterns...");
+    let css_modules_parser = CssModulesParser::new();
+    let css_modules_result = css_modules_parser.extract_css_from_js(&all_js_code);
+    if !css_modules_result.components.is_empty() {
+        println!("     CSS Modules components: {}", css_modules_result.components.len());
+        println!("     Hashed classes mapped: {}", css_modules_result.class_map.len());
+
+        // Generate import map for reference
+        let modules_import_map = css_modules_parser.generate_import_map(&css_modules_result);
+        if !modules_import_map.is_empty() {
+            generated_css.push_str("\n/* === CSS Modules Import Map === */\n/*\n");
+            generated_css.push_str(&modules_import_map);
+            generated_css.push_str("\n*/\n");
+        }
+    }
+
+    // NEW: Tailwind Generator - generate CSS for Tailwind classes
+    println!("   Generating Tailwind CSS...");
+    let tailwind_gen = TailwindGenerator::new();
+    let tailwind_result = tailwind_gen.generate(html_classes);
+    if tailwind_result.classes_generated > 0 {
+        println!("     Tailwind classes: {}/{} generated", tailwind_result.classes_generated, tailwind_result.classes_processed);
+        if !tailwind_result.unknown_classes.is_empty() {
+            println!("     Unknown classes: {} (not Tailwind)", tailwind_result.unknown_classes.len());
+        }
+
+        if !tailwind_result.css.is_empty() {
+            generated_css.push_str("\n/* === Tailwind CSS (generated) === */\n");
+            generated_css.push_str(&tailwind_result.css);
+            generated_css.push_str("\n");
+        }
+    }
+
+    // NEW: Smart CSS Extractor - extract CSS patterns from JS
+    println!("   Smart CSS extraction...");
+    let smart_extractor = SmartCssExtractor::new();
+
+    // Extract CSS from JS code
+    let smart_result = smart_extractor.extract_from_js(&all_js_code);
+    if !smart_result.class_rules.is_empty() || !smart_result.keyframes.is_empty() {
+        println!("     Smart-extracted rules: {}", smart_result.class_rules.len());
+        println!("     Smart-extracted keyframes: {}", smart_result.keyframes.len());
+
+        let smart_css = smart_extractor.generate_clean_css(&smart_result);
+        if !smart_css.is_empty() {
+            generated_css.push_str("\n/* === Smart CSS Extraction === */\n");
+            generated_css.push_str(&smart_css);
+            generated_css.push_str("\n");
+        }
     }
 
     // Run library-specific analysis
