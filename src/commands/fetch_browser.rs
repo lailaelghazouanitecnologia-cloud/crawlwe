@@ -90,6 +90,7 @@ pub async fn run_with_options(
     println!("1. Launching browser...");
     let launch_options = LaunchOptions::default_builder()
         .headless(true)
+        .sandbox(false) // Required when running as root
         .window_size(Some((options.viewport_width, options.viewport_height)))
         .build()
         .map_err(|e| format!("Failed to build launch options: {}", e))?;

@@ -4,7 +4,7 @@
 //! Limitations: No JavaScript execution, no computed styles.
 
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::Path;
 use url::Url;
@@ -353,6 +353,105 @@ fn sanitize_name(name: &str) -> String {
         .collect::<String>()
         .trim_matches('-')
         .to_string()
+}
+
+/// Infer and add missing CSS variables to prevent rendering issues
+fn infer_missing_css_variables(css: &str) -> String {
+    // Find all var(--name) usages
+    let var_usage_re = Regex::new(r"var\(--([a-zA-Z_-]+)\)").unwrap();
+    let var_def_re = Regex::new(r"--([a-zA-Z_-]+)\s*:").unwrap();
+
+    let mut used_vars: HashSet<String> = HashSet::new();
+    let mut defined_vars: HashSet<String> = HashSet::new();
+
+    // Collect used variables
+    for cap in var_usage_re.captures_iter(css) {
+        if let Some(name) = cap.get(1) {
+            used_vars.insert(name.as_str().to_string());
+        }
+    }
+
+    // Collect defined variables
+    for cap in var_def_re.captures_iter(css) {
+        if let Some(name) = cap.get(1) {
+            defined_vars.insert(name.as_str().to_string());
+        }
+    }
+
+    // Find missing variables (skip @property registered ones like _w, _h)
+    let missing: Vec<&String> = used_vars.iter()
+        .filter(|v| !defined_vars.contains(*v) && !v.starts_with("_"))
+        .collect();
+
+    if missing.is_empty() {
+        return css.to_string();
+    }
+
+    // Create default values for missing variables
+    let mut defaults: Vec<String> = Vec::new();
+    for var in &missing {
+        let default = match var.as_str() {
+            // Text colors
+            "bodyTextColor" | "fontColor" | "textColor" => "var(--fontColor, #1e1e1e)".to_string(),
+            name if name.contains("TextColor") || name.contains("textColor") => "var(--fontColor, #1e1e1e)".to_string(),
+
+            // Inverted colors
+            "invertedTextColor" | "fontInvertColor" => "var(--fontInvertColor, #ffffff)".to_string(),
+
+            // Border colors
+            name if name.contains("orderColor") => "var(--borderColorLight, rgba(30,30,30,0.27))".to_string(),
+
+            // Background colors
+            name if name.contains("ackground") || name.contains("BG") => "transparent".to_string(),
+
+            // Icon colors
+            name if name.contains("IconColor") || name.contains("iconColor") => "var(--fontColor, #1e1e1e)".to_string(),
+
+            // Highlight colors
+            name if name.contains("ighlight") => "var(--highlightColor, #c4e817)".to_string(),
+
+            // Generic fallback
+            _ => "inherit".to_string(),
+        };
+        defaults.push(format!("  --{}: {};", var, default));
+    }
+
+    // Insert missing variables into :root
+    // Find the :root block and insert before the closing brace
+    if let Some(root_start) = css.find(":root") {
+        // Find the opening brace after :root
+        if let Some(open_pos) = css[root_start..].find('{') {
+            let block_start = root_start + open_pos;
+            // Find the matching closing brace (simple approach - first } after the block content)
+            let mut brace_count = 1;
+            let mut close_pos = None;
+            for (i, ch) in css[block_start + 1..].char_indices() {
+                match ch {
+                    '{' => brace_count += 1,
+                    '}' => {
+                        brace_count -= 1;
+                        if brace_count == 0 {
+                            close_pos = Some(block_start + 1 + i);
+                            break;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+
+            if let Some(pos) = close_pos {
+                let missing_vars = format!("\n\n  /* Auto-inferred missing variables */\n{}\n", defaults.join("\n"));
+                return format!("{}{}{}", &css[..pos], missing_vars, &css[pos..]);
+            }
+        }
+    }
+
+    // No :root found, add one at the beginning
+    let root_block = format!(
+        ":root {{\n  /* Auto-inferred missing variables */\n{}\n}}\n\n",
+        defaults.join("\n")
+    );
+    format!("{}{}", root_block, css)
 }
 
 fn generate_clean_html_local(html: &str, title: &str, css: &str) -> String {
@@ -1344,8 +1443,11 @@ pub async fn run_hybrid(
     println!("   CSS Variables: {}", css_parsed.variables.len());
     println!("   Keyframes: {}", css_parsed.keyframes.len());
 
-    // Phase 6: Format CSS and optimize
+    // Phase 6: Infer missing variables and format CSS
     println!("\n6. Formatting CSS...");
+
+    // Infer missing CSS variables to prevent rendering issues
+    let css_with_inferred_vars = infer_missing_css_variables(&css_with_local_assets);
 
     let formatter = CssFormatter::with_options(CssFormatOptions {
         indent_size: 2,
@@ -1354,7 +1456,7 @@ pub async fn run_hybrid(
         group_properties: true,
         ..Default::default()
     });
-    let format_result = formatter.format(&css_with_local_assets);
+    let format_result = formatter.format(&css_with_inferred_vars);
     println!("   Rules formatted: {}", format_result.stats.rules_formatted);
     println!("   Keyframes: {}", format_result.stats.keyframes_formatted);
     println!("   Media queries: {}", format_result.stats.media_queries_formatted);
