@@ -3,7 +3,7 @@ name = "stripe-dot-dev"
 version = "1.0.0"
 generator = "crawlwe"
 mode = "hybrid"
-captured_at = "2026-01-31T02:00:04.381502920+00:00"
+captured_at = "2026-01-31T02:28:02.498012740+00:00"
 
 [source]
 url = "https://stripe.dev"
@@ -22,8 +22,8 @@ logos = 1 # Brand logos
 illustrations = 2 # Large decorative SVGs
 
 [assets.fonts]
-"sohne-var" = { weights = ["1 10000", "400"], files = ["assets/fonts/Sohne.woff2", "assets/fonts/Sohne-BuchKursiv.woff2"] }
-"sohne-mono" = { weights = ["300", "100"], files = ["assets/fonts/SohneMono-Extraleicht.woff2", "assets/fonts/SohneMono-Buch.woff2"] }
+"sohne-var" = { weights = ["400", "1 10000"], files = ["assets/fonts/Sohne-BuchKursiv.woff2", "assets/fonts/Sohne.woff2"] }
+"sohne-mono" = { weights = ["100", "300"], files = ["assets/fonts/SohneMono-Buch.woff2", "assets/fonts/SohneMono-Extraleicht.woff2"] }
 
 [css]
 variables = 28

@@ -66,6 +66,9 @@
   /* backgroundColor */
   --backgroundColor: #eaeaea;
 
+  /* bodyTextColor */
+  --bodyTextColor: var(--fontColor, #1e1e1e);
+
   /* borderColorLight */
   --borderColorLight: #1e1e1e44;
 
@@ -74,6 +77,15 @@
 
   /* counterColor */
   --counterColor: #1e1e1e;
+
+  /* dottedBorderColor */
+  --dottedBorderColor: var(--borderColorLight, rgba(30,30,30,0.27));
+
+  /* filterTextActive */
+  --filterTextActive: inherit;
+
+  /* font */
+  --font-dotgothic: inherit;
 
   /* fontColor */
   --fontColor: #1e1e1e;
@@ -84,20 +96,35 @@
   /* fontInvertColor */
   --fontInvertColor: #eaeaea;
 
+  /* globeGraphicColor */
+  --globeGraphicColor: inherit;
+
   /* highlightColor */
   --highlightColor: #c4e817;
 
   /* inactiveColor */
   --inactiveColor: #8d8d8d;
 
+  /* invertedTextColor */
+  --invertedTextColor: var(--fontColor, #1e1e1e);
+
   /* listItemIconColor */
   --listItemIconColor: var(--fontColor);
 
   /* listItemText */
-  --listItemText: #1e1e1e;
+  --listItemText: #1e1e1e /* Auto-inferred missing variables */ --borderColor: var(--borderColorLight, rgba(30,30,30,0.27));
 
   /* middleColor */
   --middleColor: #eaeaea;
+
+  /* navButtonBG */
+  --navButtonBG: transparent;
+
+  /* pixelTextColor */
+  --pixelTextColor: var(--fontColor, #1e1e1e);
+
+  /* plusIconColor */
+  --plusIconColor: var(--fontColor, #1e1e1e);
 
   /* screenHeight */
   --screenHeight: tan(atan2(var(--_h),1px));
@@ -108,8 +135,23 @@
   /* stickyOffset */
   --stickyOffset: 60px;
 
+  /* tagBorderColor */
+  --tagBorderColor: var(--borderColorLight, rgba(30,30,30,0.27));
+
   /* tagColor */
   --tagColor: var(--fontColor);
+
+  /* tagHighlightColor */
+  --tagHighlightColor: var(--highlightColor, #c4e817);
+
+  /* tagTextColor */
+  --tagTextColor: var(--fontColor, #1e1e1e);
+
+  /* terminalBackground */
+  --terminalBackground: transparent;
+
+  /* windowBarText */
+  --windowBarText: inherit;
 
   /* windowFrameBG */
   --windowFrameBG: #dcdcdc;
