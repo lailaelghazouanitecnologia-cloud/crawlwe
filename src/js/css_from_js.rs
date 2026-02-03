@@ -599,21 +599,93 @@ impl JsCssExtractor {
     }
 
     fn extract_css_modules(&self, js_code: &str, result: &mut JsCssExtractionResult) {
+        // JS methods and APIs to ignore - these are NOT CSS Module classes
+        let js_methods_to_ignore: HashSet<&str> = [
+            // Promise methods
+            "then", "catch", "finally", "resolve", "reject",
+            // Array methods
+            "map", "filter", "reduce", "forEach", "find", "findIndex", "indexOf", "includes",
+            "concat", "slice", "splice", "push", "pop", "shift", "unshift", "join", "split",
+            "sort", "reverse", "every", "some", "flat", "flatMap", "fill", "keys", "values", "entries",
+            // String methods
+            "trim", "replace", "replaceAll", "match", "search", "toLowerCase", "toUpperCase",
+            "charAt", "charCodeAt", "substring", "substr", "startsWith", "endsWith", "padStart", "padEnd",
+            "repeat", "normalize", "localeCompare",
+            // Object methods
+            "bind", "call", "apply", "toString", "valueOf", "hasOwnProperty", "isPrototypeOf",
+            "propertyIsEnumerable", "toLocaleString", "getPrototypeOf", "setPrototypeOf",
+            // DOM API methods
+            "getBoundingClientRect", "querySelector", "querySelectorAll", "getElementById",
+            "getElementsByClassName", "getElementsByTagName", "createElement", "createTextNode",
+            "appendChild", "removeChild", "insertBefore", "replaceChild", "cloneNode",
+            "getAttribute", "setAttribute", "removeAttribute", "hasAttribute", "addEventListener",
+            "removeEventListener", "dispatchEvent", "focus", "blur", "click", "submit",
+            "getComputedStyle", "getPropertyValue", "setProperty", "requestAnimationFrame",
+            "cancelAnimationFrame", "setTimeout", "clearTimeout", "setInterval", "clearInterval",
+            // DOM position/size
+            "top", "left", "right", "bottom", "width", "height", "x", "y",
+            // Number/Math
+            "toFixed", "toPrecision", "toExponential", "isNaN", "isFinite", "parseInt", "parseFloat",
+            // Date methods
+            "getTime", "getDate", "getMonth", "getFullYear", "getHours", "getMinutes", "getSeconds",
+            "setTime", "setDate", "setMonth", "setFullYear", "getDay", "getTimezoneOffset",
+            // JSON
+            "parse", "stringify",
+            // Media
+            "play", "pause", "load", "canPlayType",
+            // Storage
+            "getItem", "setItem", "removeItem", "clear",
+            // Fetch/XHR
+            "fetch", "abort", "json", "text", "blob", "arrayBuffer", "formData",
+            // Canvas
+            "getContext", "toDataURL", "toBlob", "drawImage", "fillRect", "strokeRect", "clearRect",
+            "beginPath", "closePath", "moveTo", "lineTo", "arc", "arcTo", "bezierCurveTo", "quadraticCurveTo",
+            // Misc common patterns
+            "next", "done", "value", "memoizedState", "createScriptURL", "onBeforeLayoutMeasure",
+            "onUpdate", "transformTemplate", "whileTap",
+        ].iter().cloned().collect();
+
+        // Function names that are definitely NOT CSS module imports
+        let non_module_functions: HashSet<&str> = [
+            "text", "random", "resolve", "reject", "resume", "suspend", "blob", "entries",
+            "toLowerCase", "toUpperCase", "trim", "shift", "slice", "reverse", "valueOf",
+            "getDate", "getFullYear", "getBoundingClientRect", "getProps", "udio",
+            "createScriptURL", "_getSoundIds", "tt",
+        ].iter().cloned().collect();
+
         // Extract module().className patterns
         let mut class_counts: HashMap<String, usize> = HashMap::new();
 
         for cap in self.css_module_access_pattern.captures_iter(js_code) {
             if let (Some(module_var), Some(class_name)) = (cap.get(1), cap.get(2)) {
-                let module = module_var.as_str().to_string();
-                let class = class_name.as_str().to_string();
+                let module = module_var.as_str();
+                let class = class_name.as_str();
+
+                // Skip if this is a known JS method (false positive)
+                if js_methods_to_ignore.contains(class) {
+                    continue;
+                }
+
+                // Skip if the "module" name is actually a function call
+                if non_module_functions.contains(module) {
+                    continue;
+                }
+
+                // Skip single-letter module names that are common variable names used for non-CSS purposes
+                // Only accept single letters that are commonly used for CSS modules: a, c, m, s, u, etc.
+                // with valid CSS-like class names (not JS method names)
+                if module.len() == 1 && !class.chars().next().map(|c| c.is_lowercase()).unwrap_or(false) {
+                    continue;
+                }
+
                 let key = format!("{}().{}", module, class);
 
                 *class_counts.entry(key.clone()).or_insert(0) += 1;
 
                 if !result.css_module_classes.contains_key(&key) {
                     result.css_module_classes.insert(key.clone(), CssModuleInfo {
-                        module_var: module,
-                        class_name: class,
+                        module_var: module.to_string(),
+                        class_name: class.to_string(),
                         component_hint: None,
                         usage_count: 0,
                     });
@@ -1081,24 +1153,53 @@ impl JsCssExtractor {
         result
     }
 
-    /// Generate comprehensive CSS from extraction result
+    /// Generate useful CSS from extraction result
+    ///
+    /// Only generates CSS that provides real value:
+    /// - CSS variables with resolved values (for runtime theme switching)
+    /// - Theme objects with color definitions
+    ///
+    /// Does NOT generate:
+    /// - CSS Module comments (these classes already exist in the original CSS)
+    /// - Orphan color palettes (--js-color-N variables nobody uses)
+    /// - Malformed gradients from dynamic concatenation
+    /// - Generic .canvas-context classes that don't match HTML
+    /// - Style objects as .js-object-N (these don't match HTML classes)
     pub fn generate_css(&self, result: &JsCssExtractionResult) -> String {
         let mut css = String::new();
 
-        // Generate :root with CSS variables
-        if !result.css_variables.is_empty() {
+        // Only generate CSS variables that have REAL resolved values
+        // These are useful for runtime theme switching via JS
+        let useful_vars: Vec<_> = result.css_variables.iter()
+            .filter(|(_, info)| {
+                // Skip dynamic names (placeholders)
+                if info.is_dynamic_name {
+                    return false;
+                }
+                // Must have a real value (not inherit, not a JS expression)
+                let value = info.default_value.as_ref()
+                    .or_else(|| {
+                        info.values.iter()
+                            .find(|v| v.resolved.is_some() && !v.is_dynamic)
+                            .and_then(|v| v.resolved.as_ref())
+                    });
+
+                if let Some(v) = value {
+                    !self.is_js_expression(v) && v != "inherit" && !v.is_empty()
+                } else {
+                    false
+                }
+            })
+            .collect();
+
+        if !useful_vars.is_empty() {
             css.push_str("/* ====================================\n");
             css.push_str("   CSS Variables from JavaScript\n");
+            css.push_str("   (Runtime theme values)\n");
             css.push_str("   ==================================== */\n");
             css.push_str(":root {\n");
 
-            for (name, info) in &result.css_variables {
-                if info.is_dynamic_name {
-                    css.push_str(&format!("  /* Dynamic: --{} (name computed at runtime) */\n", name));
-                    continue;
-                }
-
-                // Get the best value (default or first resolved)
+            for (name, info) in useful_vars {
                 let value = info.default_value.as_ref()
                     .or_else(|| {
                         info.values.iter()
@@ -1106,170 +1207,62 @@ impl JsCssExtractor {
                             .and_then(|v| v.resolved.as_ref())
                     })
                     .cloned()
-                    .unwrap_or_else(|| "inherit".to_string());
+                    .unwrap_or_default();
 
-                if !self.is_js_expression(&value) {
-                    let contexts: Vec<&str> = info.contexts.iter()
-                        .map(|c| match c {
-                            VariableContext::SetProperty => "setProperty",
-                            VariableContext::SetPropertyDynamic => "setProperty(dynamic)",
-                            VariableContext::GetPropertyFallback => "getPropertyValue",
-                            VariableContext::CssVarFunction => "var()",
-                            VariableContext::ThemeAccess => "theme",
-                            VariableContext::ComputedStyle => "computedStyle",
-                        })
-                        .collect();
-
-                    css.push_str(&format!("  --{}: {}; /* {} */\n", name, value, contexts.join(", ")));
-                }
-            }
-
-            css.push_str("}\n\n");
-        }
-
-        // Generate CSS Module class reference comments
-        if !result.css_module_classes.is_empty() {
-            css.push_str("/* ====================================\n");
-            css.push_str("   CSS Module Classes\n");
-            css.push_str("   ==================================== */\n");
-            css.push_str("/*\n");
-
-            let mut sorted_classes: Vec<_> = result.css_module_classes.iter().collect();
-            sorted_classes.sort_by(|a, b| b.1.usage_count.cmp(&a.1.usage_count));
-
-            for (key, info) in sorted_classes {
-                let component = info.component_hint.as_deref().unwrap_or("Unknown");
-                css.push_str(&format!(
-                    "  {} → .{}_{}__[hash] (used {} times)\n",
-                    key, component, info.class_name, info.usage_count
-                ));
-            }
-
-            css.push_str("*/\n\n");
-        }
-
-        // Generate utility classes from style objects
-        if !result.style_objects.is_empty() {
-            css.push_str("/* ====================================\n");
-            css.push_str("   Style Objects from JavaScript\n");
-            css.push_str("   ==================================== */\n");
-
-            for (i, style_obj) in result.style_objects.iter().enumerate() {
-                if style_obj.properties.is_empty() {
-                    continue;
-                }
-
-                let source = match style_obj.source {
-                    StyleSource::JsxStyleProp => "jsx-style",
-                    StyleSource::StyleAssignment => "style-assign",
-                    StyleSource::ObjectLiteral => "object",
-                    StyleSource::SpreadMerge => "spread",
+                // Only add context comment if it's meaningful
+                let context_str = if info.contexts.contains(&VariableContext::GetPropertyFallback) {
+                    " /* fallback value */"
+                } else {
+                    ""
                 };
 
-                css.push_str(&format!(".js-{}-{} {{\n", source, i));
-
-                for (prop, value) in &style_obj.properties {
-                    let css_prop = self.camel_to_kebab(prop);
-                    if let Some(ref css_val) = value.css_value {
-                        css.push_str(&format!("  {}: {};\n", css_prop, css_val));
-                    }
-                }
-
-                css.push_str("}\n\n");
-            }
-        }
-
-        // Generate canvas style reference
-        if !result.canvas_styles.is_empty() {
-            css.push_str("/* ====================================\n");
-            css.push_str("   Canvas Context Styles\n");
-            css.push_str("   ==================================== */\n");
-            css.push_str("/* Canvas 2D context styling (for reference) */\n");
-            css.push_str(".canvas-context {\n");
-
-            for style in &result.canvas_styles {
-                let css_prop = self.camel_to_kebab(&style.property);
-                if let Some(ref color) = style.resolved_color {
-                    css.push_str(&format!("  {}: {};\n", css_prop, color));
-                } else {
-                    css.push_str(&format!("  /* {}: {} (dynamic) */\n", css_prop, style.value));
-                }
+                css.push_str(&format!("  --{}: {};{}\n", name, value, context_str));
             }
 
             css.push_str("}\n\n");
         }
 
-        // Generate color palette
-        if !result.colors.is_empty() {
-            css.push_str("/* ====================================\n");
-            css.push_str("   Color Palette from JavaScript\n");
-            css.push_str("   ==================================== */\n");
-
-            let mut sorted_colors: Vec<_> = result.colors.iter().collect();
-            sorted_colors.sort();
-
-            css.push_str(":root {\n");
-            for (i, color) in sorted_colors.iter().enumerate() {
-                css.push_str(&format!("  --js-color-{}: {};\n", i + 1, color));
-            }
-            css.push_str("}\n\n");
-        }
-
-        // Generate gradient references
-        if !result.gradients.is_empty() {
-            css.push_str("/* ====================================\n");
-            css.push_str("   Gradients from JavaScript\n");
-            css.push_str("   ==================================== */\n");
-
-            for (i, gradient) in result.gradients.iter().enumerate() {
-                if let Some(ref css_grad) = gradient.css_gradient {
-                    css.push_str(&format!(".js-gradient-{} {{\n", i + 1));
-                    css.push_str(&format!("  background: {};\n", css_grad));
-                    css.push_str("}\n\n");
-                } else {
-                    css.push_str(&format!("/* Gradient {} ({}) - dynamic values */\n",
-                        i + 1, gradient.gradient_type));
-                }
-            }
-        }
-
-        // Generate animation hints
-        if !result.animations.is_empty() {
-            css.push_str("/* ====================================\n");
-            css.push_str("   Animations from JavaScript\n");
-            css.push_str("   ==================================== */\n");
-
-            for animation in &result.animations {
-                if animation.uses_raf {
-                    css.push_str("/* requestAnimationFrame animation */\n");
-                    if !animation.css_vars_modified.is_empty() {
-                        css.push_str(&format!("/* Animates CSS vars: {} */\n",
-                            animation.css_vars_modified.join(", ")));
-                    }
-                    if !animation.properties.is_empty() {
-                        css.push_str(&format!("/* Animates properties: {} */\n",
-                            animation.properties.join(", ")));
-                    }
-                }
-            }
-            css.push_str("\n");
-        }
-
-        // Generate theme variables
+        // Generate theme variables if they have actual color values
         for theme in &result.theme_objects {
-            if !theme.colors.is_empty() {
+            let useful_colors: Vec<_> = theme.colors.iter()
+                .filter(|(_, v)| !self.is_js_expression(v) && !v.is_empty())
+                .collect();
+
+            if !useful_colors.is_empty() {
                 css.push_str("/* ====================================\n");
                 css.push_str(&format!("   Theme: {}\n", theme.name));
                 css.push_str("   ==================================== */\n");
                 css.push_str(":root {\n");
 
-                for (name, value) in &theme.colors {
+                for (name, value) in useful_colors {
                     css.push_str(&format!("  --theme-{}: {};\n", name, value));
                 }
 
                 css.push_str("}\n\n");
             }
         }
+
+        // NOTE: We intentionally DO NOT generate:
+        //
+        // 1. CSS Module class comments - These classes already exist in the
+        //    original CSS with their hashed names. Comments like
+        //    "u().rect → .HeroDev_rect__[hash]" provide no value.
+        //
+        // 2. Color palette as --js-color-N - These are orphan variables that
+        //    nothing references. The actual colors are used inline in the
+        //    original CSS where needed.
+        //
+        // 3. Gradients from .concat() - These produce malformed CSS like
+        //    "linear-gradient(20deg, ".concat(l,", ");" which is invalid.
+        //
+        // 4. .canvas-context class - Canvas styling is imperative via JS,
+        //    not CSS classes. This class doesn't appear in HTML.
+        //
+        // 5. .js-object-N classes - Style objects in JS are applied inline
+        //    or via existing CSS classes. Generic numbered classes don't
+        //    match any HTML structure.
+        //
+        // 6. Animation comments - Just metadata, not usable CSS.
 
         css
     }
