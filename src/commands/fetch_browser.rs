@@ -33,6 +33,8 @@ pub struct BrowserFetchOptions {
     pub extract_computed_styles: bool,
     /// Maximum wait time (ms)
     pub timeout: u64,
+    /// Optical mode - capture ALL visible elements with full computed styles
+    pub optical_mode: bool,
 }
 
 impl Default for BrowserFetchOptions {
@@ -44,6 +46,7 @@ impl Default for BrowserFetchOptions {
             take_screenshot: true,
             extract_computed_styles: true,
             timeout: 30000,
+            optical_mode: true, // Default to optical mode for best visual capture
         }
     }
 }
@@ -67,7 +70,11 @@ pub async fn run_with_options(
     println!("CrawlWe - Browser Fetch (Headless Chrome)");
     println!("==========================================");
     println!("URL: {}", url);
-    println!("Mode: Full JavaScript rendering + Computed styles");
+    if options.optical_mode {
+        println!("Mode: OPTICAL - Capture all visible elements with computed styles");
+    } else {
+        println!("Mode: Basic - JavaScript rendering + key element styles");
+    }
     println!();
 
     let base_url = Url::parse(url)?;
@@ -165,14 +172,22 @@ pub async fn run_with_options(
     let all_css = get_stylesheets_js(&tab)?;
     println!("   Total CSS: {} bytes", all_css.len());
 
-    // Get computed styles for key elements
-    let computed_styles = if options.extract_computed_styles {
-        println!("\n5. Extracting computed styles...");
-        get_computed_styles_js(&tab)?
+    // Get computed styles - either optical (full) or basic mode
+    let (computed_styles, optical_result) = if options.optical_mode {
+        println!("\n5. Optical capture (full computed styles)...");
+        let optical = get_optical_styles_js(&tab)?;
+        println!("   Total elements: {}", optical.stats.total);
+        println!("   Visible elements: {}", optical.stats.visible);
+        println!("   Style groups (deduplicated): {}", optical.stats.groups);
+        (HashMap::new(), Some(optical))
+    } else if options.extract_computed_styles {
+        println!("\n5. Extracting computed styles (basic)...");
+        let computed = get_computed_styles_js(&tab)?;
+        println!("   Computed styles for {} elements", computed.len());
+        (computed, None)
     } else {
-        HashMap::new()
+        (HashMap::new(), None)
     };
-    println!("   Computed styles for {} elements", computed_styles.len());
 
     // Format the CSS
     println!("\n6. Formatting CSS...");
@@ -194,12 +209,19 @@ pub async fn run_with_options(
     let html_classes = extract_classes_from_html(&html);
     println!("   Classes in HTML: {}", html_classes.len());
 
-    // Generate computed styles CSS
-    let computed_css = generate_computed_styles_css(&computed_styles);
+    // Generate computed/optical styles CSS
+    let (computed_css, optical_css) = if let Some(ref optical) = optical_result {
+        (String::new(), generate_optical_css(optical))
+    } else {
+        (generate_computed_styles_css(&computed_styles), String::new())
+    };
 
     // Combine all CSS
     let mut final_css = format_result.css;
-    if !computed_css.is_empty() {
+    if !optical_css.is_empty() {
+        final_css.push_str("\n\n");
+        final_css.push_str(&optical_css);
+    } else if !computed_css.is_empty() {
         final_css.push_str("\n\n/* === Computed Styles (from browser) === */\n");
         final_css.push_str(&computed_css);
     }
@@ -253,8 +275,12 @@ pub async fn run_with_options(
     fs::write(output.join("styles.css"), &final_css)?;
     println!("   + styles.css");
 
-    // Save computed styles separately
-    if !computed_styles.is_empty() {
+    // Save computed/optical styles separately
+    if let Some(ref optical) = optical_result {
+        let optical_json = serde_json::to_string_pretty(optical)?;
+        fs::write(data_dir.join("optical_capture.json"), &optical_json)?;
+        println!("   + data/optical_capture.json ({} groups)", optical.stats.groups);
+    } else if !computed_styles.is_empty() {
         let computed_json = serde_json::to_string_pretty(&computed_styles)?;
         fs::write(data_dir.join("computed_styles.json"), &computed_json)?;
         println!("   + data/computed_styles.json");
@@ -275,6 +301,10 @@ pub async fn run_with_options(
             "html_bytes": html.len(),
             "html_optimized_bytes": html_optimized.stats.optimized_size,
             "css_bytes": final_css.len(),
+            "optical_mode": options.optical_mode,
+            "optical_elements_total": optical_result.as_ref().map(|o| o.stats.total).unwrap_or(0),
+            "optical_elements_visible": optical_result.as_ref().map(|o| o.stats.visible).unwrap_or(0),
+            "optical_style_groups": optical_result.as_ref().map(|o| o.stats.groups).unwrap_or(0),
             "computed_styles_elements": computed_styles.len(),
             "html_classes": html_classes.len(),
             "svgs_found": asset_registry.stats.total_svgs_found,
@@ -459,6 +489,311 @@ fn get_computed_styles_js(tab: &headless_chrome::Tab) -> Result<HashMap<String, 
     }
 
     Ok(HashMap::new())
+}
+
+/// Optical capture - extracts computed styles for ALL visible elements
+/// This is the core of the "visual" capture mode
+fn get_optical_styles_js(tab: &headless_chrome::Tab) -> Result<OpticalCaptureResult, Box<dyn std::error::Error>> {
+    let js = r#"
+        (function() {
+            // All CSS properties we care about for visual reproduction
+            const visualProps = [
+                // Layout
+                'display', 'position', 'top', 'right', 'bottom', 'left',
+                'width', 'height', 'min-width', 'max-width', 'min-height', 'max-height',
+                'margin', 'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+                'padding', 'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+                'box-sizing', 'overflow', 'overflow-x', 'overflow-y',
+                // Flexbox
+                'flex', 'flex-direction', 'flex-wrap', 'flex-grow', 'flex-shrink', 'flex-basis',
+                'justify-content', 'align-items', 'align-content', 'align-self', 'gap', 'row-gap', 'column-gap',
+                // Grid
+                'grid-template-columns', 'grid-template-rows', 'grid-column', 'grid-row',
+                'grid-gap', 'grid-auto-flow',
+                // Typography
+                'font-family', 'font-size', 'font-weight', 'font-style', 'font-variant',
+                'line-height', 'letter-spacing', 'text-align', 'text-decoration', 'text-transform',
+                'white-space', 'word-break', 'word-wrap',
+                // Colors & Background
+                'color', 'background', 'background-color', 'background-image', 'background-size',
+                'background-position', 'background-repeat',
+                // Borders
+                'border', 'border-width', 'border-style', 'border-color', 'border-radius',
+                'border-top', 'border-right', 'border-bottom', 'border-left',
+                // Effects
+                'box-shadow', 'opacity', 'visibility', 'z-index',
+                'transform', 'transition', 'filter', 'backdrop-filter',
+                // SVG
+                'fill', 'stroke', 'stroke-width'
+            ];
+
+            // Default values to skip (browser defaults)
+            const defaults = {
+                'display': 'block',
+                'position': 'static',
+                'top': 'auto', 'right': 'auto', 'bottom': 'auto', 'left': 'auto',
+                'margin': '0px', 'margin-top': '0px', 'margin-right': '0px', 'margin-bottom': '0px', 'margin-left': '0px',
+                'padding': '0px', 'padding-top': '0px', 'padding-right': '0px', 'padding-bottom': '0px', 'padding-left': '0px',
+                'border': '0px none rgb(0, 0, 0)', 'border-width': '0px', 'border-style': 'none',
+                'border-radius': '0px',
+                'box-shadow': 'none',
+                'opacity': '1',
+                'visibility': 'visible',
+                'z-index': 'auto',
+                'transform': 'none',
+                'transition': 'all 0s ease 0s',
+                'filter': 'none',
+                'backdrop-filter': 'none',
+                'background-image': 'none',
+                'flex': '0 1 auto',
+                'flex-grow': '0', 'flex-shrink': '1',
+                'gap': 'normal', 'row-gap': 'normal', 'column-gap': 'normal'
+            };
+
+            const result = {
+                elements: [],
+                styleGroups: {},
+                stats: { total: 0, visible: 0, groups: 0 }
+            };
+
+            // Check if element is visible
+            function isVisible(el) {
+                if (!el.offsetParent && el.tagName !== 'BODY' && el.tagName !== 'HTML') return false;
+                const style = window.getComputedStyle(el);
+                if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+                const rect = el.getBoundingClientRect();
+                if (rect.width === 0 && rect.height === 0) return false;
+                return true;
+            }
+
+            // Get unique selector for element
+            function getSelector(el) {
+                if (el.id) return '#' + el.id;
+
+                let selector = el.tagName.toLowerCase();
+                if (el.className && typeof el.className === 'string') {
+                    const classes = el.className.trim().split(/\s+/).filter(c => c && !c.includes('__'));
+                    if (classes.length > 0) {
+                        selector += '.' + classes.slice(0, 2).join('.');
+                    }
+                }
+
+                // Add nth-child for uniqueness
+                const parent = el.parentElement;
+                if (parent) {
+                    const siblings = Array.from(parent.children).filter(c => c.tagName === el.tagName);
+                    if (siblings.length > 1) {
+                        const index = siblings.indexOf(el) + 1;
+                        selector += ':nth-child(' + index + ')';
+                    }
+                }
+
+                return selector;
+            }
+
+            // Extract non-default styles
+            function extractStyles(el) {
+                const computed = window.getComputedStyle(el);
+                const styles = {};
+
+                for (const prop of visualProps) {
+                    const value = computed.getPropertyValue(prop);
+                    if (!value || value === '' || value === defaults[prop]) continue;
+                    if (value === 'none' || value === 'normal' || value === 'auto') continue;
+                    if (value === '0px' || value === '0' || value === '0px 0px 0px 0px') continue;
+                    if (value === 'rgba(0, 0, 0, 0)' || value === 'transparent') continue;
+
+                    styles[prop] = value;
+                }
+
+                return styles;
+            }
+
+            // Hash styles for grouping
+            function hashStyles(styles) {
+                const keys = Object.keys(styles).sort();
+                return keys.map(k => k + ':' + styles[k]).join(';');
+            }
+
+            // Process all elements
+            const allElements = document.querySelectorAll('*');
+            const styleHashes = {};
+
+            for (const el of allElements) {
+                result.stats.total++;
+
+                if (!isVisible(el)) continue;
+                result.stats.visible++;
+
+                const styles = extractStyles(el);
+                if (Object.keys(styles).length === 0) continue;
+
+                const hash = hashStyles(styles);
+                const selector = getSelector(el);
+
+                if (!styleHashes[hash]) {
+                    const groupId = 'g' + Object.keys(styleHashes).length;
+                    styleHashes[hash] = {
+                        id: groupId,
+                        styles: styles,
+                        selectors: []
+                    };
+                }
+
+                styleHashes[hash].selectors.push(selector);
+                result.elements.push({
+                    selector: selector,
+                    tag: el.tagName.toLowerCase(),
+                    groupId: styleHashes[hash].id
+                });
+            }
+
+            // Convert to groups
+            for (const hash in styleHashes) {
+                const group = styleHashes[hash];
+                result.styleGroups[group.id] = {
+                    selectors: group.selectors,
+                    styles: group.styles
+                };
+                result.stats.groups++;
+            }
+
+            return JSON.stringify(result);
+        })()
+    "#;
+
+    let result = tab.evaluate(js, false)?;
+
+    if let Some(value) = result.value {
+        let s = value.to_string();
+        let json_str = if s.starts_with('"') && s.ends_with('"') {
+            unescape_js_string(&s[1..s.len()-1])
+        } else {
+            s
+        };
+
+        if let Ok(parsed) = serde_json::from_str::<OpticalCaptureResult>(&json_str) {
+            return Ok(parsed);
+        }
+    }
+
+    Ok(OpticalCaptureResult::default())
+}
+
+/// Result of optical capture
+#[derive(Debug, Clone, Default, serde::Deserialize, serde::Serialize)]
+pub struct OpticalCaptureResult {
+    pub elements: Vec<CapturedElement>,
+    #[serde(rename = "styleGroups")]
+    pub style_groups: HashMap<String, StyleGroup>,
+    pub stats: OpticalStats,
+}
+
+#[derive(Debug, Clone, Default, serde::Deserialize, serde::Serialize)]
+pub struct CapturedElement {
+    pub selector: String,
+    pub tag: String,
+    #[serde(rename = "groupId")]
+    pub group_id: String,
+}
+
+#[derive(Debug, Clone, Default, serde::Deserialize, serde::Serialize)]
+pub struct StyleGroup {
+    pub selectors: Vec<String>,
+    pub styles: HashMap<String, String>,
+}
+
+#[derive(Debug, Clone, Default, serde::Deserialize, serde::Serialize)]
+pub struct OpticalStats {
+    pub total: usize,
+    pub visible: usize,
+    pub groups: usize,
+}
+
+/// Generate optimized CSS from optical capture
+fn generate_optical_css(optical: &OpticalCaptureResult) -> String {
+    let mut css = String::new();
+
+    css.push_str("/* =========================================\n");
+    css.push_str("   Optical Capture - Computed Styles\n");
+    css.push_str(&format!("   Elements: {} visible / {} total\n", optical.stats.visible, optical.stats.total));
+    css.push_str(&format!("   Style groups: {} (deduplicated)\n", optical.stats.groups));
+    css.push_str("   ========================================= */\n\n");
+
+    // Sort groups by number of selectors (most common first)
+    let mut groups: Vec<_> = optical.style_groups.iter().collect();
+    groups.sort_by(|a, b| b.1.selectors.len().cmp(&a.1.selectors.len()));
+
+    for (group_id, group) in groups {
+        if group.styles.is_empty() || group.selectors.is_empty() {
+            continue;
+        }
+
+        // Comment showing group info
+        if group.selectors.len() > 3 {
+            css.push_str(&format!("/* {} - {} elements */\n", group_id, group.selectors.len()));
+        }
+
+        // Combine selectors (max 5 per line for readability)
+        let selector_str = if group.selectors.len() > 5 {
+            let first_five: Vec<_> = group.selectors.iter().take(5).cloned().collect();
+            format!("{} /* +{} more */", first_five.join(",\n"), group.selectors.len() - 5)
+        } else {
+            group.selectors.join(",\n")
+        };
+
+        css.push_str(&selector_str);
+        css.push_str(" {\n");
+
+        // Sort properties by category
+        let mut props: Vec<_> = group.styles.iter().collect();
+        props.sort_by(|a, b| {
+            let order_a = property_order(a.0);
+            let order_b = property_order(b.0);
+            order_a.cmp(&order_b)
+        });
+
+        for (prop, value) in props {
+            css.push_str(&format!("  {}: {};\n", prop, value));
+        }
+
+        css.push_str("}\n\n");
+    }
+
+    css
+}
+
+/// Property ordering for readable CSS output
+fn property_order(prop: &str) -> usize {
+    match prop {
+        // Layout
+        p if p.starts_with("display") => 0,
+        p if p.starts_with("position") => 1,
+        p if p == "top" || p == "right" || p == "bottom" || p == "left" => 2,
+        p if p.starts_with("width") || p.starts_with("height") => 3,
+        p if p.starts_with("min-") || p.starts_with("max-") => 4,
+        // Box model
+        p if p.starts_with("margin") => 10,
+        p if p.starts_with("padding") => 11,
+        p if p.starts_with("border") => 12,
+        // Flexbox/Grid
+        p if p.starts_with("flex") => 20,
+        p if p.starts_with("grid") => 21,
+        p if p.starts_with("justify") || p.starts_with("align") => 22,
+        p if p.starts_with("gap") => 23,
+        // Typography
+        p if p.starts_with("font") => 30,
+        p if p.starts_with("line-height") || p.starts_with("letter-spacing") => 31,
+        p if p.starts_with("text") => 32,
+        // Colors
+        p if p == "color" => 40,
+        p if p.starts_with("background") => 41,
+        // Effects
+        p if p.starts_with("box-shadow") => 50,
+        p if p.starts_with("opacity") => 51,
+        p if p.starts_with("transform") => 52,
+        _ => 100,
+    }
 }
 
 /// Generate CSS from computed styles
