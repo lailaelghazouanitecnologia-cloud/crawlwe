@@ -1773,24 +1773,51 @@ async fn analyze_js_with_library_parsers(
     let js_css_extractor = JsCssExtractor::new();
     let js_css_result = js_css_extractor.extract(&all_js_code);
 
-    if js_css_result.stats.variables_found > 0 ||
-       js_css_result.stats.colors_found > 0 ||
-       js_css_result.stats.gradients_found > 0 {
-        println!("     CSS variables from JS: {}", js_css_result.stats.variables_found);
-        println!("     setProperty calls: {}", js_css_result.stats.set_property_calls);
-        println!("     getPropertyValue calls: {}", js_css_result.stats.get_property_calls);
+    // Report comprehensive extraction stats
+    let has_extractions = js_css_result.stats.css_variables_found > 0 ||
+                          js_css_result.stats.css_module_classes > 0 ||
+                          js_css_result.stats.style_objects_found > 0 ||
+                          js_css_result.stats.canvas_styles_found > 0 ||
+                          js_css_result.stats.colors_found > 0 ||
+                          js_css_result.stats.gradients_found > 0 ||
+                          js_css_result.stats.animations_found > 0;
+
+    if has_extractions {
+        println!("     Deep JS extraction results:");
+        if js_css_result.stats.css_variables_found > 0 {
+            println!("       CSS variables: {} (set: {}, get: {})",
+                js_css_result.stats.css_variables_found,
+                js_css_result.stats.set_property_calls,
+                js_css_result.stats.get_property_calls);
+            if js_css_result.stats.dynamic_variables > 0 {
+                println!("         Dynamic names: {}", js_css_result.stats.dynamic_variables);
+            }
+        }
+        if js_css_result.stats.css_module_classes > 0 {
+            println!("       CSS Module classes: {}", js_css_result.stats.css_module_classes);
+        }
+        if js_css_result.stats.style_objects_found > 0 {
+            println!("       Style objects: {}", js_css_result.stats.style_objects_found);
+        }
+        if js_css_result.stats.canvas_styles_found > 0 {
+            println!("       Canvas styles: {}", js_css_result.stats.canvas_styles_found);
+        }
         if js_css_result.stats.colors_found > 0 {
-            println!("     Colors found: {}", js_css_result.stats.colors_found);
+            println!("       Colors: {}", js_css_result.stats.colors_found);
         }
         if js_css_result.stats.gradients_found > 0 {
-            println!("     Gradients found: {}", js_css_result.stats.gradients_found);
+            println!("       Gradients: {}", js_css_result.stats.gradients_found);
+        }
+        if js_css_result.stats.animations_found > 0 {
+            println!("       Animations: {}", js_css_result.stats.animations_found);
+        }
+        if js_css_result.stats.theme_objects_found > 0 {
+            println!("       Theme objects: {}", js_css_result.stats.theme_objects_found);
         }
 
         let js_extracted_css = js_css_extractor.generate_css(&js_css_result);
         if !js_extracted_css.is_empty() {
-            generated_css.push_str("\n/* === CSS Extracted from Dynamic JS === */\n");
             generated_css.push_str(&js_extracted_css);
-            generated_css.push_str("\n");
         }
     }
 
