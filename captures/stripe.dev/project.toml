@@ -2,8 +2,8 @@
 name = "stripe-dot-dev"
 version = "1.0.0"
 generator = "crawlwe"
-mode = "hybrid"
-captured_at = "2026-02-03T09:56:06.398249469+00:00"
+mode = "static"
+captured_at = "2026-02-03T10:11:52.129715093+00:00"
 
 [source]
 url = "https://stripe.dev"
@@ -11,26 +11,13 @@ title = "Stripe Dot Dev"
 
 [technologies]
 
-[assets]
-svgs = 14
-images = 0
-fonts = 4
+[dependencies.scripts]
 
-[assets.svgs]
-icons = 11 # Small reusable icons
-logos = 1 # Brand logos
-illustrations = 2 # Large decorative SVGs
-
-[assets.fonts]
-"sohne-mono" = { weights = ["300", "100"], files = ["assets/fonts/SohneMono-Buch.woff2", "assets/fonts/SohneMono-Extraleicht.woff2"] }
-"sohne-var" = { weights = ["400", "1 10000"], files = ["assets/fonts/Sohne-BuchKursiv.woff2", "assets/fonts/Sohne.woff2"] }
-
-[css]
-variables = 28
-keyframes = 3
-colors = 11
-
-# Import paths for use in your project:
-# import styles from './styles.css'
-# import { icons } from './assets/svgs/icons/'
-# import fonts from './assets/fonts/'
+[dependencies.fonts]
+"sohne-var" = { weights = ["400", "700"], url = "https://fonts.googleapis.com/css2?family=sohne-var:wght@400;700&display=swap" }
+"sohne-mono" = { weights = ["400", "700"], url = "https://fonts.googleapis.com/css2?family=sohne-mono:wght@400;700&display=swap" }
+"Helvetica Neue" = { weights = ["400", "700"], url = "https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@400;700&display=swap" }
+"Arial" = { weights = ["400", "700"], url = "https://fonts.googleapis.com/css2?family=Arial:wght@400;700&display=swap" }
+"var(--font-dotgothic)" = { weights = ["400", "700"], url = "https://fonts.googleapis.com/css2?family=var(--font-dotgothic):wght@400;700&display=swap" }
+"Courier New" = { weights = ["400", "700"], url = "https://fonts.googleapis.com/css2?family=Courier+New:wght@400;700&display=swap" }
+"Courier" = { weights = ["400", "700"], url = "https://fonts.googleapis.com/css2?family=Courier:wght@400;700&display=swap" }

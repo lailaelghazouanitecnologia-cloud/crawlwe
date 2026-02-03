@@ -1,24 +1,4 @@
 {
-  "asset_extraction": {
-    "data_uris_skipped": 0,
-    "errors": 0,
-    "fonts_found": 4,
-    "images_found": 1,
-    "imports_found": 0,
-    "invalid_urls": 0,
-    "local_fonts": 0,
-    "total_urls_found": 5
-  },
-  "asset_registry": {
-    "duplicate_svgs": 180,
-    "fonts": 4,
-    "icons": 11,
-    "illustrations": 2,
-    "images": 0,
-    "logos": 1,
-    "total_svgs": 194,
-    "unique_svgs": 14
-  },
   "css_analysis": {
     "colors": 11,
     "keyframes": 3,
@@ -32,21 +12,19 @@
     }
   ],
   "domain": "stripe.dev",
-  "extracted_at": "2026-02-03T09:56:06.397201061+00:00",
-  "mode": "hybrid",
+  "extracted_at": "2026-02-03T10:11:52.129207145+00:00",
+  "mode": "static",
   "stats": {
-    "css_bytes": 47252,
-    "css_sources": 4,
+    "css_bytes": 38327,
     "external_scripts": 11,
+    "external_styles": 2,
     "fonts_downloaded": 4,
     "html_bytes": 378542,
-    "html_classes": 166,
-    "html_optimized_bytes": 273277,
+    "html_optimized_bytes": 244183,
     "images_downloaded": 1,
-    "js_css_extracted": false,
     "nextjs_images": 0,
     "svgs_downloaded": 0,
-    "svgs_extracted": 12
+    "svgs_extracted": 15
   },
   "title": "Stripe Dot Dev",
   "url": "https://stripe.dev"
