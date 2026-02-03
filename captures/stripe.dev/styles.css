@@ -62,6 +62,9 @@
   /* bodyTextColor */
   --bodyTextColor: var(--fontColor, #1e1e1e);
 
+  /* borderColor */
+  --borderColor: var(--borderColorLight, rgba(30,30,30,0.27));
+
   /* borderColorLight */
   --borderColorLight: #1e1e1e44;
 
@@ -105,13 +108,10 @@
   --listItemIconColor: var(--fontColor);
 
   /* listItemText */
-  --listItemText: #1e1e1e /* Auto-inferred missing variables */ --borderColor: var(--borderColorLight, rgba(30,30,30,0.27));
+  --listItemText: #1e1e1e /* Auto-inferred missing variables */ --navButtonBG: transparent;
 
   /* middleColor */
   --middleColor: #eaeaea;
-
-  /* navButtonBG */
-  --navButtonBG: transparent;
 
   /* pixelTextColor */
   --pixelTextColor: var(--fontColor, #1e1e1e);
@@ -2457,18 +2457,136 @@ margin-top:160px;
 .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
 .text-xs { font-size: 0.75rem; line-height: 1rem; }
 
+
+/* === CSS Extracted from Dynamic JS === */
+/* CSS Variables extracted from JavaScript */
+:root {
+  --artForeground: #eaeaea;
+  --artStroke: #1d1d1d;
+}
+
+/* Colors found in JavaScript */
+/*
+  #C0C7D1
+  #dedede
+  #0E1E1E
+  #8d8d8d
+  #75147C
+  #00017B
+  #262626
+  #1d1d1d
+  #D6B8D8
+  #210901
+  #694901
+  #F3C603
+  #e9e9e9
+  #AAE87B
+  #cacaca
+  #120C01
+  #211601
+  #013200
+  #090909
+  #75D1C4
+  #d9d9eb
+  #012000
+  #282828
+  #553A01
+  #330B01
+  #631102
+  #131313
+  #E8E8E8
+  #345540
+  #C4E817
+  #979797
+  #eaeaea
+  #0A2534
+  #234B4C
+  #244E56
+  #4D0E02
+  #6E9CF1
+  #F0F0F7
+  #273947
+  #4D4DA3
+  #ABABAB
+  #1e1e1e44
+  #FE2305
+  #013B00
+  #434343
+  #808080
+  #9372C9
+  #f2f2f8
+  #00FF00
+  #011627
+  #000159
+  #EFEFF9
+  #5657CA
+  #ffffff
+  #007300
+  #000000
+  #4d0e02
+  #DCDCDC
+  #4D4D4D
+  #1E1E1E
+  #014D00
+  #223E64
+  #EA34F7
+  #0e2232
+  #1e1e1e11
+  #FFFF55
+  #e8e8e8
+  #CCCCCC
+  #3A4B5A
+  #402C01
+  #121212
+  #011700
+  #010F00
+  #D9D9D9
+  #585858
+  #2c0a01
+  #181818
+  #c4e817
+  #4D4D1A
+  #1e1e1e
+  #12323F
+  #791303
+  #FF3708
+  #00CB00
+  #5b5b5b
+  #00070D
+  #362501
+  #012500
+  #B2B3D7
+  #5F7D97
+  #FEC97D
+  #E49F02
+  #271B01
+  #8C1F94
+  #00CC00
+  #C0C0C0
+  #74FBFD
+  #015F00
+  #2D2D2D
+  #170F01
+*/
+
+/* Gradients found in JavaScript */
+/*
+  background: linear-gradient(20deg, ".concat(l,", ");
+*/
+
+
 /* Tailwind CSS Utilities */
 
-.text-lg {
-  font-size: 1.125rem;
+.text-xs {
+  font-size: 0.75rem;
 }
 
 .text-sm {
   font-size: 0.875rem;
 }
 
-.text-xs {
-  font-size: 0.75rem;
+.text-lg {
+  font-size: 1.125rem;
 }
 
 
