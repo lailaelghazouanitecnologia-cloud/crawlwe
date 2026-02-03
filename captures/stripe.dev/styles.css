@@ -74,9 +74,6 @@
   /* counterColor */
   --counterColor: #1e1e1e;
 
-  /* dottedBorderColor */
-  --dottedBorderColor: var(--borderColorLight, rgba(30,30,30,0.27));
-
   /* filterTextActive */
   --filterTextActive: inherit;
 
@@ -108,10 +105,13 @@
   --listItemIconColor: var(--fontColor);
 
   /* listItemText */
-  --listItemText: #1e1e1e /* Auto-inferred missing variables */ --navButtonBG: transparent;
+  --listItemText: #1e1e1e /* Auto-inferred missing variables */ --dottedBorderColor: var(--borderColorLight, rgba(30,30,30,0.27));
 
   /* middleColor */
   --middleColor: #eaeaea;
+
+  /* navButtonBG */
+  --navButtonBG: transparent;
 
   /* pixelTextColor */
   --pixelTextColor: var(--fontColor, #1e1e1e);
@@ -2457,129 +2457,344 @@ margin-top:160px;
 .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
 .text-xs { font-size: 0.75rem; line-height: 1rem; }
 
-
-/* === CSS Extracted from Dynamic JS === */
-/* CSS Variables extracted from JavaScript */
+/* ====================================
+   CSS Variables from JavaScript
+   ==================================== */
 :root {
-  --artForeground: #eaeaea;
-  --artStroke: #1d1d1d;
+  --artStroke: #1d1d1d; /* getPropertyValue */
+  --fontColor: inherit; /* setProperty */
+  --artForeground: #eaeaea; /* setProperty, getPropertyValue */
+  --highlightColor: inherit; /* setProperty */
+  /* Dynamic: --_dynamic_1 (name computed at runtime) */
 }
 
-/* Colors found in JavaScript */
+/* ====================================
+   CSS Module Classes
+   ==================================== */
 /*
-  #C0C7D1
-  #dedede
-  #0E1E1E
-  #8d8d8d
-  #75147C
-  #00017B
-  #262626
-  #1d1d1d
-  #D6B8D8
-  #210901
-  #694901
-  #F3C603
-  #e9e9e9
-  #AAE87B
-  #cacaca
-  #120C01
-  #211601
-  #013200
-  #090909
-  #75D1C4
-  #d9d9eb
-  #012000
-  #282828
-  #553A01
-  #330B01
-  #631102
-  #131313
-  #E8E8E8
-  #345540
-  #C4E817
-  #979797
-  #eaeaea
-  #0A2534
-  #234B4C
-  #244E56
-  #4D0E02
-  #6E9CF1
-  #F0F0F7
-  #273947
-  #4D4DA3
-  #ABABAB
-  #1e1e1e44
-  #FE2305
-  #013B00
-  #434343
-  #808080
-  #9372C9
-  #f2f2f8
-  #00FF00
-  #011627
-  #000159
-  #EFEFF9
-  #5657CA
-  #ffffff
-  #007300
-  #000000
-  #4d0e02
-  #DCDCDC
-  #4D4D4D
-  #1E1E1E
-  #014D00
-  #223E64
-  #EA34F7
-  #0e2232
-  #1e1e1e11
-  #FFFF55
-  #e8e8e8
-  #CCCCCC
-  #3A4B5A
-  #402C01
-  #121212
-  #011700
-  #010F00
-  #D9D9D9
-  #585858
-  #2c0a01
-  #181818
-  #c4e817
-  #4D4D1A
-  #1e1e1e
-  #12323F
-  #791303
-  #FF3708
-  #00CB00
-  #5b5b5b
-  #00070D
-  #362501
-  #012500
-  #B2B3D7
-  #5F7D97
-  #FEC97D
-  #E49F02
-  #271B01
-  #8C1F94
-  #00CC00
-  #C0C0C0
-  #74FBFD
-  #015F00
-  #2D2D2D
-  #170F01
+  u().rect → .HeroDev_rect__[hash] (used 23 times)
+  c().icon → .Console_icon__[hash] (used 4 times)
+  text().then → .Unknown_then__[hash] (used 4 times)
+  am().memoizedState → .Unknown_memoizedState__[hash] (used 4 times)
+  ah().memoizedState → .Unknown_memoizedState__[hash] (used 4 times)
+  h().plusIcons → .Footer_plusIcons__[hash] (used 3 times)
+  p().icon → .Console_icon__[hash] (used 3 times)
+  random().toString → .Unknown_toString__[hash] (used 3 times)
+  p().iconButton → .Console_iconButton__[hash] (used 3 times)
+  _getSoundIds().indexOf → .Unknown_indexOf__[hash] (used 3 times)
+  resolve().then → .Unknown_then__[hash] (used 3 times)
+  r().bind → .Unknown_bind__[hash] (used 2 times)
+  m().hotkey → .Unknown_hotkey__[hash] (used 2 times)
+  c().webRingsIcon → .PlusIcon_webRingsIcon__[hash] (used 2 times)
+  m().navButton → .NavButton_navButton__[hash] (used 2 times)
+  et().tocLabel → .Unknown_tocLabel__[hash] (used 2 times)
+  p().iconGroup → .Console_iconGroup__[hash] (used 2 times)
+  u().dragline → .Art_dragline__[hash] (used 2 times)
+  toString().includes → .Unknown_includes__[hash] (used 2 times)
+  ei().listItem → .ListItem_listItem__[hash] (used 1 times)
+  o().isOpen → .AccordionButton_isOpen__[hash] (used 1 times)
+  ed().body → .GetHelpTopic_body__[hash] (used 1 times)
+  u().consoleIcon → .Art_consoleIcon__[hash] (used 1 times)
+  ed().label → .TableHeader_label__[hash] (used 1 times)
+  q().type → .FeedListItem_type__[hash] (used 1 times)
+  getBoundingClientRect().bottom → .Art_bottom__[hash] (used 1 times)
+  getDate().toString → .Unknown_toString__[hash] (used 1 times)
+  h().chevron → .Unknown_chevron__[hash] (used 1 times)
+  getProps().onBeforeLayoutMeasure → .Unknown_onBeforeLayoutMeasure__[hash] (used 1 times)
+  u().container → .TableHeader_container__[hash] (used 1 times)
+  ed().header → .GetHelpTopic_header__[hash] (used 1 times)
+  u().Canvas → .Art_Canvas__[hash] (used 1 times)
+  q().topics → .FeedListItem_topics__[hash] (used 1 times)
+  ei().body → .GetHelpTopic_body__[hash] (used 1 times)
+  h().inner → .AccordionListItem_inner__[hash] (used 1 times)
+  h().collapse → .Unknown_collapse__[hash] (used 1 times)
+  q().summary → .FeedListItem_summary__[hash] (used 1 times)
+  u().left → .Art_left__[hash] (used 1 times)
+  a().webRingsBackground → .ThemeVisuals_webRingsBackground__[hash] (used 1 times)
+  h().content → .Directory_content__[hash] (used 1 times)
+  q().authors → .FeedListItem_authors__[hash] (used 1 times)
+  getProps().whileTap → .Unknown_whileTap__[hash] (used 1 times)
+  a().image → .FeaturedPost_image__[hash] (used 1 times)
+  ed().GetHelpTopic → .GetHelpTopic_GetHelpTopic__[hash] (used 1 times)
+  i().icon → .Console_icon__[hash] (used 1 times)
+  a().count → .Filter_count__[hash] (used 1 times)
+  p().terminal → .Console_terminal__[hash] (used 1 times)
+  resume().then → .Unknown_then__[hash] (used 1 times)
+  u().nav__logoIcon → .Unknown_nav__logoIcon__[hash] (used 1 times)
+  u().Chrome → .Art_Chrome__[hash] (used 1 times)
+  getBoundingClientRect().top → .Unknown_top__[hash] (used 1 times)
+  h().directory → .Directory_directory__[hash] (used 1 times)
+  h().section → .FeaturedPostsSection_section__[hash] (used 1 times)
+  ei().link → .FeedListItem_link__[hash] (used 1 times)
+  trim().match → .Unknown_match__[hash] (used 1 times)
+  eh().line → .TypingMarquee_line__[hash] (used 1 times)
+  tt().createScriptURL → .Unknown_createScriptURL__[hash] (used 1 times)
+  l().icon → .Console_icon__[hash] (used 1 times)
+  a().listItem → .ListItem_listItem__[hash] (used 1 times)
+  u().tenX → .Art_tenX__[hash] (used 1 times)
+  entries().next → .Unknown_next__[hash] (used 1 times)
+  r().superText → .SectionTitle_superText__[hash] (used 1 times)
+  h().secondPlusIcons → .Hero_secondPlusIcons__[hash] (used 1 times)
+  ei().mainLink → .RouterObjective_mainLink__[hash] (used 1 times)
+  et().listSection → .FeedSection_listSection__[hash] (used 1 times)
+  q().authorsLabel → .Unknown_authorsLabel__[hash] (used 1 times)
+  eh().char → .TypingMarquee_char__[hash] (used 1 times)
+  trim().split → .Unknown_split__[hash] (used 1 times)
+  u().canvasContainer → .Art_canvasContainer__[hash] (used 1 times)
+  h().icon → .Console_icon__[hash] (used 1 times)
+  r().then → .Unknown_then__[hash] (used 1 times)
+  p().floatIcon → .Console_floatIcon__[hash] (used 1 times)
+  ei().title → .FeaturedPost_title__[hash] (used 1 times)
+  eh().icon → .Console_icon__[hash] (used 1 times)
+  i().tag → .Tag_tag__[hash] (used 1 times)
+  u().propsIcon → .Art_propsIcon__[hash] (used 1 times)
+  p().terminalInner → .Console_terminalInner__[hash] (used 1 times)
+  getProps().onUpdate → .Unknown_onUpdate__[hash] (used 1 times)
+  p().topbarTitle → .Console_topbarTitle__[hash] (used 1 times)
+  u().bottom → .Art_bottom__[hash] (used 1 times)
+  h().toStripe → .Hero_toStripe__[hash] (used 1 times)
+  i().section → .FeaturedPostsSection_section__[hash] (used 1 times)
+  ei().objective → .RouterObjective_objective__[hash] (used 1 times)
+  u().right → .Art_right__[hash] (used 1 times)
+  h().thirdPlusIcons → .Hero_thirdPlusIcons__[hash] (used 1 times)
+  ed().examples → .GetHelpTopic_examples__[hash] (used 1 times)
+  a().arrow → .FeaturedPost_arrow__[hash] (used 1 times)
+  p().then → .Unknown_then__[hash] (used 1 times)
+  o().verticalPath → .AccordionButton_verticalPath__[hash] (used 1 times)
+  ed().exampleIcon → .Unknown_exampleIcon__[hash] (used 1 times)
+  blob().then → .Unknown_then__[hash] (used 1 times)
+  h().title → .FeaturedPost_title__[hash] (used 1 times)
+  h().subtitle → .Unknown_subtitle__[hash] (used 1 times)
+  u().nav → .Nav_nav__[hash] (used 1 times)
+  q().date → .FeedListItem_date__[hash] (used 1 times)
+  et().tocHeader → .RouterSection_tocHeader__[hash] (used 1 times)
+  a().crtLines → .ThemeVisuals_crtLines__[hash] (used 1 times)
+  a().then → .Unknown_then__[hash] (used 1 times)
+  c().canvas → .Unknown_canvas__[hash] (used 1 times)
+  a().body → .GetHelpTopic_body__[hash] (used 1 times)
+  h().toggle → .Directory_toggle__[hash] (used 1 times)
+  a().tagHighlight → .Unknown_tagHighlight__[hash] (used 1 times)
+  a().tag → .Tag_tag__[hash] (used 1 times)
+  j().section → .FeaturedPostsSection_section__[hash] (used 1 times)
+  i().label → .TableHeader_label__[hash] (used 1 times)
+  et().section → .FeaturedPostsSection_section__[hash] (used 1 times)
+  h().dev → .Hero_dev__[hash] (used 1 times)
+  p().viewport → .Console_viewport__[hash] (used 1 times)
+  u().row2 → .Art_row2__[hash] (used 1 times)
+  a().checkboxIcon → .Filter_checkboxIcon__[hash] (used 1 times)
+  u().Dev → .HeroDev_Dev__[hash] (used 1 times)
+  q().topic → .Unknown_topic__[hash] (used 1 times)
+  udio().play → .Unknown_play__[hash] (used 1 times)
+  toLowerCase().replace → .Unknown_replace__[hash] (used 1 times)
+  getBoundingClientRect().height → .Unknown_height__[hash] (used 1 times)
+  et().listHeader → .FeedSection_listHeader__[hash] (used 1 times)
+  h().brMobile → .Hero_brMobile__[hash] (used 1 times)
+  q().dateText → .FeedListItem_dateText__[hash] (used 1 times)
+  a().bodyHighlight → .FeaturedPost_bodyHighlight__[hash] (used 1 times)
+  u().fig → .Art_fig__[hash] (used 1 times)
+  eh().container → .TableHeader_container__[hash] (used 1 times)
+  t().then → .Unknown_then__[hash] (used 1 times)
+  a().highlight → .FeaturedPost_highlight__[hash] (used 1 times)
+  reverse().concat → .Unknown_concat__[hash] (used 1 times)
+  i().slash → .Unknown_slash__[hash] (used 1 times)
+  ec().section → .FeaturedPostsSection_section__[hash] (used 1 times)
+  ei().label → .TableHeader_label__[hash] (used 1 times)
+  q().summaryLabel → .FeedListItem_summaryLabel__[hash] (used 1 times)
+  j().title → .FeaturedPost_title__[hash] (used 1 times)
+  ed().example → .GetHelpTopic_example__[hash] (used 1 times)
+  p().topbar → .Console_topbar__[hash] (used 1 times)
+  l().listItem → .ListItem_listItem__[hash] (used 1 times)
+  q().title → .FeaturedPost_title__[hash] (used 1 times)
+  m().active → .NavButton_active__[hash] (used 1 times)
+  getFullYear().toString → .Unknown_toString__[hash] (used 1 times)
+  h().chevronIcon → .Directory_chevronIcon__[hash] (used 1 times)
+  h().brDesktop → .Hero_brDesktop__[hash] (used 1 times)
+  i().webRingsGlobe → .GlobeIcon_webRingsGlobe__[hash] (used 1 times)
+  a().option → .Filter_option__[hash] (used 1 times)
+  p().frame → .Console_frame__[hash] (used 1 times)
+  e().then → .Unknown_then__[hash] (used 1 times)
+  a().title → .FeaturedPost_title__[hash] (used 1 times)
+  ed().marquee → .Unknown_marquee__[hash] (used 1 times)
+  a().post → .FeaturedPost_post__[hash] (used 1 times)
+  reverse().map → .Unknown_map__[hash] (used 1 times)
+  toLowerCase().slice → .Unknown_slice__[hash] (used 1 times)
+  l().container → .TableHeader_container__[hash] (used 1 times)
+  q().link → .FeedListItem_link__[hash] (used 1 times)
+  tu().description → .Unknown_description__[hash] (used 1 times)
+  getBoundingClientRect().width → .Unknown_width__[hash] (used 1 times)
+  toLowerCase().includes → .Unknown_includes__[hash] (used 1 times)
+  i().ellipseCanvas → .GlobeIcon_ellipseCanvas__[hash] (used 1 times)
+  valueOf().toString → .Unknown_toString__[hash] (used 1 times)
+  u().nav__link → .Unknown_nav__link__[hash] (used 1 times)
+  a().tags → .FeaturedPost_tags__[hash] (used 1 times)
+  slice().map → .Unknown_map__[hash] (used 1 times)
+  u().nav__left → .Unknown_nav__left__[hash] (used 1 times)
+  u().background → .Unknown_background__[hash] (used 1 times)
+  i().grid → .GridLayout_grid__[hash] (used 1 times)
+  a().copy → .FeaturedPost_copy__[hash] (used 1 times)
+  a().list → .Filter_list__[hash] (used 1 times)
+  o().button → .AccordionButton_button__[hash] (used 1 times)
+  r().title → .FeaturedPost_title__[hash] (used 1 times)
+  shift().trim → .Unknown_trim__[hash] (used 1 times)
+  h().dot → .Hero_dot__[hash] (used 1 times)
+  a().optionLabel → .Unknown_optionLabel__[hash] (used 1 times)
+  et().tocSection → .RouterSection_tocSection__[hash] (used 1 times)
+  et().art → .RouterSection_art__[hash] (used 1 times)
+  et().tocBody → .RouterSection_tocBody__[hash] (used 1 times)
+  suspend().then → .Unknown_then__[hash] (used 1 times)
+  c().footer → .EndlessFooter_footer__[hash] (used 1 times)
+  ed().link → .FeedListItem_link__[hash] (used 1 times)
+  q().topicsLabel → .FeedListItem_topicsLabel__[hash] (used 1 times)
+  h().label → .TableHeader_label__[hash] (used 1 times)
+  ei().linkList → .Footer_linkList__[hash] (used 1 times)
+  et().tocSquare → .RouterSection_tocSquare__[hash] (used 1 times)
+  h().directoryIcon → .Directory_directoryIcon__[hash] (used 1 times)
+  p().modeFloat → .Console_modeFloat__[hash] (used 1 times)
+  getProps().transformTemplate → .Unknown_transformTemplate__[hash] (used 1 times)
+  u().Art → .Art_Art__[hash] (used 1 times)
+  a().bind → .Unknown_bind__[hash] (used 1 times)
+  ei().arrow → .FeaturedPost_arrow__[hash] (used 1 times)
+  shift().replace → .Unknown_replace__[hash] (used 1 times)
 */
 
-/* Gradients found in JavaScript */
-/*
+/* ====================================
+   Canvas Context Styles
+   ==================================== */
+/* Canvas 2D context styling (for reference) */
+.canvas-context {
+  /* global-composite-operation: "source-over" (dynamic) */
+  /* global-composite-operation: "destination-out" (dynamic) */
+  stroke: #1d1d1d;
+  fill: #eaeaea;
+  /* stroke: a.globeGraphicColor (dynamic) */
+  /* stroke: o (dynamic) */
+  /* fill: j (dynamic) */
+}
+
+/* ====================================
+   Color Palette from JavaScript
+   ==================================== */
+:root {
+  --js-color-1: #000000;
+  --js-color-2: #000159;
+  --js-color-3: #00017B;
+  --js-color-4: #00070D;
+  --js-color-5: #007300;
+  --js-color-6: #00CB00;
+  --js-color-7: #00CC00;
+  --js-color-8: #00FF00;
+  --js-color-9: #010F00;
+  --js-color-10: #011627;
+  --js-color-11: #011700;
+  --js-color-12: #012000;
+  --js-color-13: #012500;
+  --js-color-14: #013200;
+  --js-color-15: #013B00;
+  --js-color-16: #014D00;
+  --js-color-17: #015F00;
+  --js-color-18: #090909;
+  --js-color-19: #0A2534;
+  --js-color-20: #0E1E1E;
+  --js-color-21: #0e2232;
+  --js-color-22: #120C01;
+  --js-color-23: #121212;
+  --js-color-24: #12323F;
+  --js-color-25: #131313;
+  --js-color-26: #170F01;
+  --js-color-27: #181818;
+  --js-color-28: #1E1E1E;
+  --js-color-29: #1d1d1d;
+  --js-color-30: #1e1e1e;
+  --js-color-31: #1e1e1e11;
+  --js-color-32: #1e1e1e44;
+  --js-color-33: #210901;
+  --js-color-34: #211601;
+  --js-color-35: #223E64;
+  --js-color-36: #234B4C;
+  --js-color-37: #244E56;
+  --js-color-38: #262626;
+  --js-color-39: #271B01;
+  --js-color-40: #273947;
+  --js-color-41: #282828;
+  --js-color-42: #2D2D2D;
+  --js-color-43: #2c0a01;
+  --js-color-44: #330B01;
+  --js-color-45: #345540;
+  --js-color-46: #362501;
+  --js-color-47: #3A4B5A;
+  --js-color-48: #402C01;
+  --js-color-49: #434343;
+  --js-color-50: #4D0E02;
+  --js-color-51: #4D4D1A;
+  --js-color-52: #4D4D4D;
+  --js-color-53: #4D4DA3;
+  --js-color-54: #4d0e02;
+  --js-color-55: #553A01;
+  --js-color-56: #5657CA;
+  --js-color-57: #585858;
+  --js-color-58: #5F7D97;
+  --js-color-59: #5b5b5b;
+  --js-color-60: #631102;
+  --js-color-61: #694901;
+  --js-color-62: #6E9CF1;
+  --js-color-63: #74FBFD;
+  --js-color-64: #75147C;
+  --js-color-65: #75D1C4;
+  --js-color-66: #791303;
+  --js-color-67: #808080;
+  --js-color-68: #8C1F94;
+  --js-color-69: #8d8d8d;
+  --js-color-70: #9372C9;
+  --js-color-71: #979797;
+  --js-color-72: #AAE87B;
+  --js-color-73: #ABABAB;
+  --js-color-74: #B2B3D7;
+  --js-color-75: #C0C0C0;
+  --js-color-76: #C0C7D1;
+  --js-color-77: #C4E817;
+  --js-color-78: #CCCCCC;
+  --js-color-79: #D6B8D8;
+  --js-color-80: #D9D9D9;
+  --js-color-81: #DCDCDC;
+  --js-color-82: #E49F02;
+  --js-color-83: #E8E8E8;
+  --js-color-84: #EA34F7;
+  --js-color-85: #EFEFF9;
+  --js-color-86: #F0F0F7;
+  --js-color-87: #F3C603;
+  --js-color-88: #FE2305;
+  --js-color-89: #FEC97D;
+  --js-color-90: #FF3708;
+  --js-color-91: #FFFF55;
+  --js-color-92: #c4e817;
+  --js-color-93: #cacaca;
+  --js-color-94: #d9d9eb;
+  --js-color-95: #dedede;
+  --js-color-96: #e8e8e8;
+  --js-color-97: #e9e9e9;
+  --js-color-98: #eaeaea;
+  --js-color-99: #f2f2f8;
+  --js-color-100: #ffffff;
+  --js-color-101: rgba(0, 0, 0, .3);
+  --js-color-102: rgba(255, 255, 255, .3);
+}
+
+/* ====================================
+   Gradients from JavaScript
+   ==================================== */
+.js-gradient-1 {
   background: linear-gradient(20deg, ".concat(l,", ");
-*/
+}
 
+/* Gradient 2 (linear) - dynamic values */
+/* ====================================
+   Animations from JavaScript
+   ==================================== */
+/* requestAnimationFrame animation */
+/* Animates CSS vars: fontColor, artForeground, highlightColor */
+/* Animates properties: globalCompositeOperation, globalCompositeOperation, strokeStyle, fillStyle, strokeStyle, strokeStyle, fillStyle */
 
 /* Tailwind CSS Utilities */
-
-.text-xs {
-  font-size: 0.75rem;
-}
 
 .text-sm {
   font-size: 0.875rem;
@@ -2587,6 +2802,10 @@ margin-top:160px;
 
 .text-lg {
   font-size: 1.125rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
 }
 
 
