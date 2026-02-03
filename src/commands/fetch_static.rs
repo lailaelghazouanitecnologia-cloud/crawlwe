@@ -11,7 +11,7 @@ use url::Url;
 
 use crawlwe_core::pipeline::{CssMicroparser, LibMicroparser, HtmlOptimizer, HtmlOptimizeOptions, DetectedLibrary, CssParseResult};
 use crawlwe_core::export::LibraryCDN;
-use crawlwe_core::js::{JsAnalyzer, LibraryRegistry, JsToCssConverter, CssModulesParser, TailwindGenerator, SmartCssExtractor};
+use crawlwe_core::js::{JsAnalyzer, LibraryRegistry, JsToCssConverter, CssModulesParser, TailwindGenerator, SmartCssExtractor, JsCssExtractor};
 use crawlwe_core::css::{CssAssetExtractor, CssAssetExtractionResult, ImageContext, CssFormatter, CssFormatOptions};
 use crawlwe_core::assets::{AssetRegistry, SvgAsset, SvgCategory, CssStats, ImageContext as AssetImageContext};
 
@@ -1764,6 +1764,32 @@ async fn analyze_js_with_library_parsers(
         if !smart_css.is_empty() {
             generated_css.push_str("\n/* === Smart CSS Extraction === */\n");
             generated_css.push_str(&smart_css);
+            generated_css.push_str("\n");
+        }
+    }
+
+    // NEW: JS CSS Extractor - extract CSS variables and styles from dynamic JS
+    println!("   Extracting CSS from dynamic JS...");
+    let js_css_extractor = JsCssExtractor::new();
+    let js_css_result = js_css_extractor.extract(&all_js_code);
+
+    if js_css_result.stats.variables_found > 0 ||
+       js_css_result.stats.colors_found > 0 ||
+       js_css_result.stats.gradients_found > 0 {
+        println!("     CSS variables from JS: {}", js_css_result.stats.variables_found);
+        println!("     setProperty calls: {}", js_css_result.stats.set_property_calls);
+        println!("     getPropertyValue calls: {}", js_css_result.stats.get_property_calls);
+        if js_css_result.stats.colors_found > 0 {
+            println!("     Colors found: {}", js_css_result.stats.colors_found);
+        }
+        if js_css_result.stats.gradients_found > 0 {
+            println!("     Gradients found: {}", js_css_result.stats.gradients_found);
+        }
+
+        let js_extracted_css = js_css_extractor.generate_css(&js_css_result);
+        if !js_extracted_css.is_empty() {
+            generated_css.push_str("\n/* === CSS Extracted from Dynamic JS === */\n");
+            generated_css.push_str(&js_extracted_css);
             generated_css.push_str("\n");
         }
     }

@@ -39,6 +39,14 @@
 //! - Spacing, typography, colors
 //! - Responsive prefixes
 //! - State variants
+//!
+//! ## JS CSS Extractor
+//!
+//! The `css_from_js` module extracts CSS from dynamic JS patterns:
+//! - style.setProperty("--var", value) calls
+//! - style.getPropertyValue("--var") || default fallbacks
+//! - Inline style assignments
+//! - Color and gradient values
 
 pub mod parser;
 pub mod analyzer;
@@ -48,6 +56,7 @@ pub mod converter;
 pub mod css_modules;
 pub mod tailwind_gen;
 pub mod smart_css;
+pub mod css_from_js;
 
 pub use parser::{JsParser, JsParseResult};
 pub use analyzer::{JsAnalyzer, JsAnalysisResult};
@@ -57,3 +66,4 @@ pub use converter::{JsToCssConverter, JsToCssResult, KeyframeAnimation, Keyframe
 pub use css_modules::{CssModulesParser, CssModulesResult, CssModuleComponent, CssModuleClass};
 pub use tailwind_gen::{TailwindGenerator, TailwindGenResult};
 pub use smart_css::{SmartCssExtractor, SmartCssResult, CssRule, CssProperty, CssSource};
+pub use css_from_js::{JsCssExtractor, JsCssExtractionResult, CssVariableInfo, VariableContext};
